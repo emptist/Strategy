@@ -65,10 +65,11 @@ The [Swift Package Manager](https://swift.org/package-manager/) is a tool for au
 
 Once you have your Swift package set up, adding a dependency is as easy as adding it to the dependencies value of your Package.swift.
 
-```
+```swift
 dependencies: [
     .package(url: "https://github.com/TradeWithIt/Strategy", branch: "main")
 ]
+```
 
 ## Contributions
 Contributions are welcome! If you have improvements or bug fixes, please submit a pull request or open an issue.
