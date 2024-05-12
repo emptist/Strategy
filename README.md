@@ -1,4 +1,4 @@
-# GitHub README for Strategy Protocol and Utilities Library
+# Strategy Protocol and Utilities Library
 
 ## Introduction
 This repository provides a flexible and powerful framework for financial strategy development and testing, designed specifically for use with Swift. It includes a standard `Strategy` protocol and a suite of utility functions to assist in strategy analysis and decision-making based on technical indicators.
