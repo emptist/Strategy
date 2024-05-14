@@ -1,5 +1,5 @@
 import XCTest
-@testable import TradeWithIt
+@testable import TradingStrategy
 
 final class PhaseTests: XCTestCase {
     func testPhaseGroupingWithNoise() {

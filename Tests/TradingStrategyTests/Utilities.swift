@@ -1,5 +1,5 @@
 import Foundation
-@testable import TradeWithIt
+@testable import TradingStrategy
 
 public struct Candle: Klines {
     public var priceClose: Double
