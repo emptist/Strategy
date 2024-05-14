@@ -1,4 +1,4 @@
-# GitHub README for Strategy Protocol and Utilities Library
+# Strategy Protocol and Utilities Library
 
 ## Introduction
 This repository provides a flexible and powerful framework for financial strategy development and testing, designed specifically for use with Swift. It includes a standard `Strategy` protocol and a suite of utility functions to assist in strategy analysis and decision-making based on technical indicators.
@@ -65,10 +65,11 @@ The [Swift Package Manager](https://swift.org/package-manager/) is a tool for au
 
 Once you have your Swift package set up, adding a dependency is as easy as adding it to the dependencies value of your Package.swift.
 
-```
+```swift
 dependencies: [
     .package(url: "https://github.com/TradeWithIt/Strategy", branch: "main")
 ]
+```
 
 ## Contributions
 Contributions are welcome! If you have improvements or bug fixes, please submit a pull request or open an issue.
