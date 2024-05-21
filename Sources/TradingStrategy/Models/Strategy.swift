@@ -2,6 +2,11 @@ import Foundation
 
 public protocol Strategy {
     var candles: [Klines] { get }
+    var phases: [Phase] { get }
+    var longTermMA: [Double] { get }
+    var shortTermMA: [Double] { get }
+    var phaseTermMa: [Double] { get }
+    
     var recentCandlesSize: Int { get }
     var recentCandlesPatternPrediction: Bool { get }
     var patternIdentified: Bool { get }

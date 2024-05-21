@@ -48,11 +48,11 @@ public struct Scale: Equatable {
         )
     }
     
-    public var xStep: TimeInterval {
+    public var xGuideStep: TimeInterval {
         (x.upperBound - x.lowerBound) / 5
     }
     
-    public var yStep: Double {
+    public var yGuideStep: Double {
         (y.upperBound - y.lowerBound) / 10
     }
     
