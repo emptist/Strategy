@@ -1,92 +1,106 @@
 import Foundation
 
+public typealias PhaseLinePoint = (point: CGPoint, index: Int)
+
 public struct Phase: Equatable {
     public var type: PhaseType
+    // Rage of candle indices.
     public var range: ClosedRange<Int>
+    
+    public init(type: PhaseType, range: ClosedRange<Int>) {
+        self.type = type
+        self.range = range
+    }
 }
 
 public enum PhaseType: String, Equatable {
-    case time = "Time"
-    case price = "Price"
-}
-
-public extension [PhaseType] {
-    func group(ignoringNoiseUpTo noiseThreshold: Int = 3) -> [Phase] {
-        var phases = [Phase]()
-        var currentType: PhaseType? = nil
-        var endIndex = self.count - 1
-        var noiseCount = 0 // Counter for consecutive elements of a different type
-        
-        for (index, type) in self.enumerated().reversed() {
-            if type == currentType {
-                // Reset noise count when we find a matching type
-                noiseCount = 0
-            } else if currentType == nil || noiseCount < noiseThreshold {
-                // Increment noise count if we encounter a different type
-                // but haven't exceeded the noise threshold
-                if currentType != nil {
-                    noiseCount += 1
-                }
-            } else {
-                // If noise threshold is exceeded, start a new phase
-                phases.insert(Phase(type: currentType!, range: (index + noiseCount + 1)...endIndex), at: 0)
-                currentType = type
-                endIndex = index + noiseCount // End before the noise
-                noiseCount = 0
-            }
-            
-            // Update currentType if starting a new phase or if it's the first element
-            if currentType == nil || noiseCount == 0 {
-                currentType = type
-            }
-        }
-        
-        // Add the last phase, taking into account any trailing noise
-        if let currentType = currentType, endIndex >= noiseCount {
-            phases.insert(Phase(type: currentType, range: 0...endIndex), at: 0)
-        }
-        
-        return phases
-    }
+    case sideways = "sideways"
+    case uptrend = "uptrend"
+    case downtrend = "downtrend"
 }
 
 public extension [Klines] {
-    func detectPhaseTypes(
-        forSimpleMovingAverage sma: [Double],
-        inScale scale: Scale,
-        canvasSize size: CGSize,
-        period: Int
-    ) -> [PhaseType] {
-        guard sma.count > period else { return [] }
-        var phases = [PhaseType](repeating: .price, count: sma.count)
-        for i in period ..< count {
-            let currentPoint = sma[i].toPoint(atTime: self[i].timeCenter, scale: scale, canvasSize: size)
-            let previousPoint = sma[i - period].toPoint(atTime: self[i - period].timeCenter, scale: scale, canvasSize: size)
-            let angle  = currentPoint.angleLineToXAxis(previousPoint)
-            
-            switch abs(angle) {
-            case let x where x > 30:
-                phases[i] = .price
-            default:
-                phases[i] = .time
+    /// Detects sideways, uptrend, and downtrend phases based on local extremes and volatility.
+    func detectPhaseFromSideways(
+        minimumLength: Int = 12,
+        bollingerPeriod: Int = 20,
+        adxPeriod: Int = 14,
+        rsiPeriod: Int = 14,
+        minMaxWindowSize: Int = 6
+    ) -> [Phase] {
+        let sidelines = self.sidelines(bollingerPeriod: bollingerPeriod, adxPeriod: adxPeriod, rsiPeriod: rsiPeriod)
+        let (minima, maxima) = findLocalExtremes(windowSize: minMaxWindowSize)
+
+        var sequences: [Phase] = []
+        var start: Int? = nil
+
+        for (index, isSideways) in sidelines.enumerated() {
+            if isSideways {
+                if start == nil {
+                    start = index
+                }
+            } else {
+                if let startIndex = start, index - startIndex >= minimumLength {
+                    sequences.append(Phase(type: .sideways, range: startIndex...(index - 1)))
+                }
+                start = nil
             }
         }
-        
-        return phases
+
+        if let startIndex = start, sidelines.count - startIndex >= minimumLength {
+            sequences.append(Phase(type: .sideways, range: startIndex...(sidelines.count - 1)))
+        }
+
+        // Fill gaps with uptrend and downtrend phases
+        var filledSequences: [Phase] = []
+        var previousEnd = -1
+
+        for phase in sequences {
+            if phase.range.lowerBound > previousEnd + 1 {
+                let trendPhases = detectTrendsInRange(start: previousEnd + 1, end: phase.range.lowerBound - 1, minima: minima, maxima: maxima)
+                filledSequences.append(contentsOf: trendPhases)
+            }
+
+            filledSequences.append(phase)
+            previousEnd = phase.range.upperBound
+        }
+
+        if previousEnd < sidelines.count - 1 {
+            let trendPhases = detectTrendsInRange(start: previousEnd + 1, end: sidelines.count - 1, minima: minima, maxima: maxima)
+            filledSequences.append(contentsOf: trendPhases)
+        }
+
+        return filledSequences
     }
-    
-    func detectPhases(
-        forSimpleMovingAverage sma: [Double],
-        inScale scale: Scale,
-        canvasSize size: CGSize,
-        period: Int
-    ) -> [Phase] {
-        detectPhaseTypes(
-            forSimpleMovingAverage: sma,
-            inScale: scale,
-            canvasSize: size,
-            period: period
-        ).group()
+
+    /// Splits a range into uptrend and downtrend phases based on local min/max points.
+    private func detectTrendsInRange(start: Int, end: Int, minima: [Int], maxima: [Int]) -> [Phase] {
+        var trendPhases: [Phase] = []
+        var trendStart = start
+        var currentTrend: PhaseType? = nil
+
+        for i in start...end {
+            let isMin = minima.contains(i)
+            let isMax = maxima.contains(i)
+
+            if isMin || isMax {
+                let nextTrend: PhaseType = isMin ? .uptrend : .downtrend
+
+                if currentTrend == nil {
+                    currentTrend = nextTrend
+                } else if let trend = currentTrend, nextTrend != currentTrend {
+                    trendPhases.append(Phase(type: trend, range: trendStart...i))
+                    trendStart = i
+                    currentTrend = nextTrend
+                }
+            }
+        }
+
+        if let trend = currentTrend, trendStart <= end {
+            trendPhases.append(Phase(type: trend, range: trendStart...end))
+        }
+
+        return trendPhases
     }
 }
 
@@ -98,27 +112,13 @@ public extension ClosedRange where Bound == Int {
 }
 
 public extension [Phase] {
-    /// Last price phase before suprise
+    /// Last price phase
     var lastPricePhase: Phase? {
-        var previousPhase: Phase?
-        if let lastPhase = last, lastPhase.type == .time, count > 1 {
-            previousPhase = self[count - 2]
-        } else if (last?.range.length ?? 0) < 4, count > 2 {
-            previousPhase = self[count - 3]
-        }
-        return previousPhase
+        return self.last(where: { $0.type != .sideways })
     }
     
-    /// Last time phase before suprise
-    var lastTimePhase: Phase? {
-        if let lastPhase = last, lastPhase.type == .time {
-            return lastPhase
-        } else if (last?.range.length ?? 0) < 4, count > 1 {
-            let lastPhase = self[count - 2]
-            if lastPhase.type == .time {
-                return lastPhase
-            }
-        }
-        return nil
+    /// Return time phase if it is last phase in the list
+    var timePhaseIfLast: Phase? {
+        return self.last?.type == .sideways ? self.last : nil
     }
 }

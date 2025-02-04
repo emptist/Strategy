@@ -7,8 +7,6 @@ public protocol Strategy {
     var shortTermMA: [Double] { get }
     var phaseTermMa: [Double] { get }
     
-    var recentCandlesSize: Int { get }
-    var recentCandlesPatternPrediction: Bool { get }
     var patternIdentified: Bool { get }
     var patterInformatioin: [String: Bool] { get }
     

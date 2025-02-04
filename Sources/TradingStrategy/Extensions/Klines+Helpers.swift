@@ -4,12 +4,12 @@ public typealias BollingerBands = (upperBand: [Double], middleBand: [Double], lo
 
 public extension [Klines] {
     // Calculate Simple Moving Average (SMA)
-    func simpleMovingAverage(period: Int) -> Double? {
+    func simpleMovingAverage(_ period: Int) -> Double? {
         // Ensure we have enough candles to calculate the SMA
         guard count >= period else { return nil }
         
         // Sum up the closing prices of the last 'period' candles
-        let sum = self.suffix(period).reduce(0) { $0 + $1.priceClose }
+        let sum = self.suffix(period).reduce(0.0) { $0 + $1.priceClose }
         
         // Divide by the period to get the average
         return sum / Double(period)
@@ -22,7 +22,7 @@ public extension [Klines] {
             if i < period - 1 {
                 smaValues.append(0) // Not enough data to calculate SMA
             } else {
-                let sum = self[(i - period + 1)...i].reduce(0, { $0 + $1.priceClose })
+                let sum = self[(i - period + 1)...i].reduce(0.0, { $0 + $1.priceClose })
                 let average = sum / Double(period)
                 smaValues.append(average)
             }
@@ -104,6 +104,8 @@ public extension [Klines] {
     /// - Parameter period: The number of periods over which to calculate the indicators.
     /// - Returns: A tuple containing two arrays: the first for +DI values and the second for -DI values, corresponding to each candle in the input array.
     func directionalIndicators(period: Int) -> ([Double], [Double]) {
+        guard count > 1 else { return ([],[]) }
+        
         var plusDI: [Double] = []
         var minusDI: [Double] = []
         var trValues: [Double] = []
@@ -168,6 +170,8 @@ public extension [Klines] {
     /// - Parameter period: The number of periods over which to calculate the RSI.
     /// - Returns: An array of RSI values corresponding to each candle in the input array. The first few values (up to `period - 1`) will be 0, as there's not enough data to calculate the RSI.
     func relativeStrengthIndex(period: Int) -> [Double] {
+        guard count > period else { return [] }
+        
         var rsi = [Double](repeating: 0.0, count: count)
         var gains = 0.0
         var losses = 0.0
@@ -208,5 +212,36 @@ public extension [Klines] {
         }
         
         return rsi
+    }
+    
+    func sidelines(
+        bollingerPeriod: Int,
+        adxPeriod: Int,
+        rsiPeriod: Int
+    ) -> [Bool] {
+        let bollingerBands = bollingerBands(period: bollingerPeriod, multiplier: 2.0)
+        let adx = averageDirectionalIndex(period: adxPeriod)
+        let rsi = relativeStrengthIndex(period: rsiPeriod)
+        return indices.map { index in
+            // Ensure sufficient data for Bollinger Bands, ADX, and RSI
+            guard index >= bollingerPeriod,
+                  index >= adxPeriod,
+                  index >= rsiPeriod else { return false }
+            
+            // Bollinger Bands Condition
+            let price = self[index].priceClose
+            let inBollingerRange = price > bollingerBands.lowerBand[index] + 0.2 * (bollingerBands.upperBand[index] - bollingerBands.lowerBand[index]) &&
+            price < bollingerBands.upperBand[index] - 0.2 * (bollingerBands.upperBand[index] - bollingerBands.lowerBand[index])
+            
+            // ADX Condition
+            let adxBelowThreshold = adx[index] < 30
+            
+            // RSI Condition
+            let rsiNeutral = rsi[index] > 40 && rsi[index] < 60
+            
+            // Return true only if at least two conditions are satisfied
+            let trueConditions = [inBollingerRange, adxBelowThreshold, rsiNeutral].filter { $0 }.count
+            return trueConditions > 1
+        }
     }
 }

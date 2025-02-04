@@ -12,8 +12,6 @@ The `Strategy` protocol is designed for implementing trading strategies with an 
 
 ```swift
 public protocol Strategy {
-    var recentCandlesSize: Int { get }
-    var recentCandlesPatternPrediction: Bool { get }
     var patternIdentified: Bool { get }
     
     init(candles: [Klines], multiplier: Int)
@@ -29,13 +27,6 @@ import Foundation
 public struct ExampleStrat: Strategy {
     public init(candles: [Klines], multiplier: Int = 15) {
         // Implementation based on `multiplier` and `candles`
-    }
-    
-    public let recentCandlesSize: Int = 12
-    
-    public var recentCandlesPatternPrediction: Bool {
-        // Logic to predict candle pattern
-        return true
     }
     
     public var patternIdentified: Bool {

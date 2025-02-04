@@ -1,6 +1,18 @@
 import Foundation
 
 extension [Double] {
+    // Calculate Simple Moving Average (SMA)
+    func simpleMovingAverage(_ period: Int) -> Double? {
+        // Ensure we have enough candles to calculate the SMA
+        guard count > period else { return nil }
+        
+        // Sum up the closing prices of the last 'period' candles
+        let sum = self.suffix(period).reduce(0.0) { $0 + $1 }
+        
+        // Divide by the period to get the average
+        return sum / Double(period)
+    }
+    
     /// Calculates the Exponential Moving Average (EMA) for a given set of values over a specified period.
     /// - Parameters:
     ///   - period: The number of periods over which to calculate the EMA.
