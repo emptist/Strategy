@@ -142,6 +142,13 @@ public extension [Klines] {
         return (plusDI, minusDI)
     }
     
+    /// Calculates the Average True Range (ATR) for a given period.
+    /// Returns only the **latest ATR value**, optimized for real-time use.
+    func computeATR(period: Int = 14) -> Double {
+        let atrValues = averageTrueRange(period: period)
+        return atrValues.last ?? 0.0
+    }
+    
     /// Calculates the Average Directional Index (ADX) for a given set of candlesticks.
     ///
     /// The ADX is a technical analysis indicator used to quantify the strength of a trend.

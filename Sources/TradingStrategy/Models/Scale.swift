@@ -81,8 +81,19 @@ public struct Scale: Equatable {
         return width / xAmplitiude * size.width
     }
     
+    public func timeInterval(fromWidth width: Double, size: CGSize) -> TimeInterval {
+        guard !width.isNaN, !size.width.isNaN, size.width != 0 else { return x.lowerBound }
+        return x.lowerBound + (width / size.width) * xAmplitiude
+    }
+    
     public func height(_ height: Double, size: CGSize) -> Double {
         guard !height.isNaN, !size.height.isNaN else { return 0 }
         return height / yAmplitiude * size.height
     }
+    
+    public func price(fromHeight height: Double, size: CGSize) -> Double {
+        guard !height.isNaN, !size.height.isNaN, size.height != 0 else { return y.upperBound }
+        return y.upperBound - (height / size.height) * yAmplitiude
+    }
+
 }

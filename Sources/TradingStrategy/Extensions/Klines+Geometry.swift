@@ -35,8 +35,8 @@ public extension Array where Element == CGPoint {
         guard count > windowSize * 2 else { return [] }
 
         var localExtremes: [Int] = []
-        var lookingForMin: Bool? = nil // Start with unknown direction
-        var lastExtremeIndex: Int? = nil // Track the last confirmed extreme
+        var lookingForMin: Bool? = nil
+        var lastExtremeIndex: Int? = nil
 
         var i = windowSize
         while i < count - windowSize {
@@ -77,7 +77,7 @@ public extension Array where Element == CGPoint {
 }
 
 public extension Array where Element == PhaseLinePoint {
-    func convertToPhases(minPhaseLength: Int = 8) -> [Phase] {
+    func convertToPhases(minPhaseLength: Int = 14) -> [Phase] {
         guard count > 1 else { return [] }
 
         var phases: [Phase] = []
@@ -91,15 +91,8 @@ public extension Array where Element == PhaseLinePoint {
             // **Detect movement type**
             let xMove = abs(curr.0.x - prev.0.x)
             let yMove = abs(curr.0.y - prev.0.y)
-            let angle = abs(prev.0.angleLineToXAxis(curr.0))
 
-            let newPhase: PhaseType
-            if angle > 20 {
-                newPhase = curr.0.y > prev.0.y ? .downtrend : .uptrend
-            } else {
-                newPhase = .sideways
-            }
-
+            let newPhase: PhaseType = curr.0.y > prev.0.y ? .downtrend : .uptrend
 
             // **Detect phase transitions**
             if currentPhase != newPhase {
@@ -108,7 +101,7 @@ public extension Array where Element == PhaseLinePoint {
                 // **🔹 Merge small phases into the previous one**
                 if phaseLength < minPhaseLength, !phases.isEmpty {
                     let lastPhase = phases.removeLast()
-                    startIdx = lastPhase.range.lowerBound // Extend the previous phase
+                    startIdx = lastPhase.range.lowerBound
                 } else {
                     phases.append(Phase(type: currentPhase, range: startIdx...prev.1))
                     startIdx = prev.1
