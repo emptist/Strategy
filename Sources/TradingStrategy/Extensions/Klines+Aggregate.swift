@@ -1,37 +1,48 @@
 import Foundation
 
 public extension [Klines] {
-    /// Groups Klines of lower interval together in order to present higher interval of bars.
-    /// For instance 1min candles can be group to represent 5min candles
-    /// - Parameter interval: how many candles of lower interval to group together. In order to achieve 15min candles from 1min bars, you would put 15 here.
-    /// - Returns: higher interval klines
-    func aggregateBars(by interval: Int) -> [Klines] {
+    
+    /// **Aggregates Klines into higher timeframes using FIXED TIME INTERVALS**
+    /// - Parameter targetInterval: Desired bar duration (e.g., `900` for 15min, `3600` for 1h).
+    /// - Returns: Aggregated Klines matching exact time intervals.
+    func aggregateBars(to targetInterval: TimeInterval) -> [Klines] {
+        guard let firstBar = self.first else { return [] } // Safe check for empty array
+        
         var aggregatedBars: [Klines] = []
-        var tempHigh: Double = -Double.infinity
-        var tempLow: Double = Double.infinity
-        var startIndex = 0
+        var tempBar: Klines?
+        
+        // Find the first candle's start time and align to the fixed interval
+        let startAlignedTime = (floor(firstBar.timeOpen / targetInterval) * targetInterval)
 
-        for (index, bar) in enumerated() {
-            tempHigh = Swift.max(tempHigh, bar.priceHigh)
-            tempLow = Swift.min(tempLow, bar.priceLow)
-
-            let isLastBar = index == count - 1
-            let isIntervalEnd = (index - startIndex + 1) % interval == 0
-
-            if isIntervalEnd || isLastBar {
+        for bar in self {
+            let barStartTime = (floor(bar.timeOpen / targetInterval) * targetInterval)
+            
+            if tempBar == nil || barStartTime > (tempBar?.timeOpen ?? 0) {
+                // Start new aggregated candle
+                if let completedBar = tempBar {
+                    aggregatedBars.append(completedBar)
+                }
+                
                 var newBar = bar
-                newBar.timeOpen = self[startIndex].timeOpen
-                newBar.priceOpen = self[startIndex].priceOpen
-                newBar.priceHigh = tempHigh
-                newBar.priceLow = tempLow
+                newBar.timeOpen = barStartTime
+                newBar.priceOpen = bar.priceOpen
+                newBar.priceHigh = bar.priceHigh
+                newBar.priceLow = bar.priceLow
                 newBar.priceClose = bar.priceClose
-                newBar.interval = bar.interval * Double(interval)
-                aggregatedBars.append(newBar)
-
-                startIndex = index + 1
-                tempHigh = -Double.infinity
-                tempLow = Double.infinity
+                newBar.interval = targetInterval
+                tempBar = newBar
+            } else if var updatedBar = tempBar {
+                // Modify a local copy and then reassign
+                updatedBar.priceHigh = Swift.max(updatedBar.priceHigh, bar.priceHigh)
+                updatedBar.priceLow = Swift.min(updatedBar.priceLow, bar.priceLow)
+                updatedBar.priceClose = bar.priceClose
+                tempBar = updatedBar
             }
+        }
+        
+        // Append the last aggregated bar if it exists
+        if let lastBar = tempBar {
+            aggregatedBars.append(lastBar)
         }
 
         return aggregatedBars

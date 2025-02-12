@@ -31,6 +31,11 @@ public extension [Klines] {
         return smaValues
     }
     
+    func triangularMovingAverage(period: Int) -> [Double] {
+        simpleMovingAverage(period: period)
+            .simpleMovingAverage(period: period)
+    }
+    
     func rateOfChange(period: Int) -> [Double] {
         var roc = [Double](repeating: 0.0, count: count)
         for i in period..<count {

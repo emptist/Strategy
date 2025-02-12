@@ -57,4 +57,10 @@ extension [Double] {
         
         return smaValues
     }
+    
+    /// Calculates the **Triangular Moving Average (TMA)** over a given period.
+    func triangularMovingAverage(period: Int) -> [Double] {
+        let sma = self.simpleMovingAverage(period: period)
+        return sma.simpleMovingAverage(period: period)
+    }
 }

@@ -15,7 +15,7 @@ public struct Scale: Equatable {
     public init(
         data: [Klines],
         interval: TimeInterval,
-        candlesPerScreen: Int = 60
+        candlesPerScreen: Int = 110
     ) {
         guard !data.isEmpty else {
             self.init()
@@ -81,9 +81,14 @@ public struct Scale: Equatable {
         return width / xAmplitiude * size.width
     }
     
-    public func timeInterval(fromWidth width: Double, size: CGSize) -> TimeInterval {
-        guard !width.isNaN, !size.width.isNaN, size.width != 0 else { return x.lowerBound }
-        return x.lowerBound + (width / size.width) * xAmplitiude
+    public func timeInterval(x value: Double, size: CGSize) -> TimeInterval {
+        guard !value.isNaN, !size.width.isNaN, size.width != 0 else { return x.lowerBound }
+        return x.lowerBound + (value / size.width) * xAmplitiude
+    }
+    
+    public func timeInterval(fromLength length: Double, size: CGSize) -> TimeInterval {
+        guard !length.isNaN, !size.width.isNaN, size.width != 0 else { return 0 }
+        return (length / size.width) * xAmplitiude
     }
     
     public func height(_ height: Double, size: CGSize) -> Double {
