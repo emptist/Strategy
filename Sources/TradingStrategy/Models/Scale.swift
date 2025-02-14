@@ -15,7 +15,7 @@ public struct Scale: Equatable {
     public init(
         data: [Klines],
         interval: TimeInterval,
-        candlesPerScreen: Int = 110
+        candlesPerScreen: Int = 80
     ) {
         guard !data.isEmpty else {
             self.init()
@@ -41,6 +41,10 @@ public struct Scale: Equatable {
             // Swap values if the start is greater than the end
             swap(&yScaleStart, &yScaleEnd)
         }
+        
+        let verticalPadding = (yScaleEnd - yScaleStart) * 0.2
+        yScaleStart -= verticalPadding
+        yScaleEnd += verticalPadding
         
         self.init(
             x: xScaleStart ..< TimeInterval(now),

@@ -93,52 +93,54 @@ public extension [Klines] {
     /// - Returns: A list of detected market **phases** (uptrend, downtrend, sideways).
     func detectPhasesUsingMovingAverage(period: Int = 8, shortTermMA sma: [Double]) -> [Phase] {
         guard count > period else { return [] }
-
-         var phases: [Phase] = []
-         var startIdx = 0
-         var currentPhase: PhaseType = self[0].priceClose > sma[0] ? .uptrend : .downtrend
-
-         for i in 1..<count {
-             let price = self[i].priceClose
-             let maValue = sma[i]
-             let newPhase: PhaseType
-
-             if abs(price - maValue) < (price * 0.001) {
-                 newPhase = .sideways
-             } else {
-                 newPhase = price > maValue ? .uptrend : .downtrend
-             }
-
-             // Detect trend change
-             if newPhase != currentPhase {
-                 let phaseLength = i - startIdx
-
-                 // **Merge short phases into previous or next phase**
-                 if phaseLength < period, !phases.isEmpty {
-                     // Merge with previous phase if exists
-                     phases[phases.count - 1].range = phases[phases.count - 1].range.lowerBound...(i - 1)
-                 } else {
-                     // Create a new phase
-                     phases.append(Phase(type: currentPhase, range: startIdx...(i - 1)))
-                 }
-
-                 startIdx = i
-                 currentPhase = newPhase
-             }
-         }
-
-         // Add the last phase, ensuring we merge short phases properly
-         if startIdx < count {
-             let phaseLength = count - startIdx
-             if phaseLength < period, !phases.isEmpty {
-                 // Merge the last phase with the previous one
-                 phases[phases.count - 1].range = phases[phases.count - 1].range.lowerBound...(count - 1)
-             } else {
-                 // Append the last phase
-                 phases.append(Phase(type: currentPhase, range: startIdx...(count - 1)))
-             }
-         }
-
-         return phases
-     }
+        
+        var phases: [Phase] = []
+        var startIdx = 0
+        var currentPhase: PhaseType = self[0].priceClose > sma[0] ? .uptrend : .downtrend
+        
+        for i in 1..<count {
+            let price = self[i].priceClose
+            let maValue = sma[i]
+            let newPhase: PhaseType
+            
+            if abs(price - maValue) < (price * 0.001) {
+                newPhase = .sideways
+            } else {
+                newPhase = price > maValue ? .uptrend : .downtrend
+            }
+            
+            if newPhase != currentPhase {
+                let phaseLength = i - startIdx
+                
+                if phaseLength < period, !phases.isEmpty {
+                    phases[phases.count - 1].range = phases[phases.count - 1].range.lowerBound...(i - 1)
+                } else {
+                    phases.append(Phase(type: currentPhase, range: startIdx...(i - 1)))
+                }
+                
+                startIdx = i
+                currentPhase = newPhase
+            }
+        }
+        
+        if startIdx < count {
+            let phaseLength = count - startIdx
+            if phaseLength < period, !phases.isEmpty {
+                phases[phases.count - 1].range = phases[phases.count - 1].range.lowerBound...(count - 1)
+            } else {
+                phases.append(Phase(type: currentPhase, range: startIdx...(count - 1)))
+            }
+        }
+        
+        var mergedPhases: [Phase] = []
+        for phase in phases {
+            if let last = mergedPhases.last, last.type == phase.type {
+                mergedPhases[mergedPhases.count - 1].range = last.range.lowerBound...phase.range.upperBound
+            } else {
+                mergedPhases.append(phase)
+            }
+        }
+        
+        return mergedPhases
+    }
 }
