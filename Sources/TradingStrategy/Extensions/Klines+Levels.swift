@@ -9,8 +9,18 @@ public struct Touch {
 /// **Support/Resistance Level with Touch Data**
 public struct Level {
     public let time: TimeInterval
-    public let level: Double
     public var touches: [Touch]
+    
+    public var level: Double {
+        guard !touches.isEmpty else { return 0.0 }
+
+        let candidates = touches.map { $0.closePrice }
+        return candidates.min(by: { left, right in
+            let leftDeviation = candidates.map { abs($0 - left) }.reduce(0, +)
+            let rightDeviation = candidates.map { abs($0 - right) }.reduce(0, +)
+            return leftDeviation < rightDeviation
+        }) ?? 0.0
+    }
 }
 
 /// **Container for Support & Resistance Levels**
@@ -46,7 +56,7 @@ public extension [Klines] {
                     guard abs(candle.priceLow - minLow) / minLow <= dynamicTolerance else { return nil }
                     return Touch(time: candle.timeOpen, closePrice: candle.priceClose)
                 }
-                supports.append((i, Level(time: current.timeOpen, level: current.priceLow, touches: touches)))
+                supports.append((i, Level(time: current.timeOpen, touches: touches)))
             }
         }
         return supports
@@ -72,7 +82,7 @@ public extension [Klines] {
                     guard abs(candle.priceHigh - maxHigh) / maxHigh <= dynamicTolerance else { return nil }
                     return Touch(time: candle.timeOpen, closePrice: candle.priceClose)
                 }
-                resistances.append((i, Level(time: current.timeOpen, level: current.priceHigh, touches: touches)))
+                resistances.append((i, Level(time: current.timeOpen, touches: touches)))
             }
         }
         return resistances
