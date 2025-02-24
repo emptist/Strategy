@@ -24,15 +24,13 @@ public struct Scale: Equatable {
         
         let now = (data.last?.timeOpen ?? Date().timeIntervalSince1970) + (interval * 4)
         let from = interval * Double(candlesPerScreen)
-        var xScaleStart: TimeInterval
+        var xScaleStart = TimeInterval(now - from)
         var yScaleStart: Double
         var yScaleEnd: Double
         if data.count > candlesPerScreen {
-            xScaleStart = data[data.count - candlesPerScreen].timeOpen
             yScaleStart = data[data.count - candlesPerScreen ..< data.count].min(by: { $0.priceLow < $1.priceLow })?.priceLow ?? -100
             yScaleEnd = data[data.count - candlesPerScreen ..< data.count].max(by: { $0.priceHigh < $1.priceHigh })?.priceHigh ?? 100
         } else {
-            xScaleStart = TimeInterval(now - from)
             yScaleStart = data.min(by: { $0.priceLow < $1.priceLow })?.priceLow ?? -100
             yScaleEnd = data.max(by: { $0.priceHigh < $1.priceHigh })?.priceHigh ?? 100
         }
