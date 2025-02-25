@@ -1,14 +1,15 @@
 import Foundation
 
 extension Double {
-    public func toPoint(
-        atTime time: TimeInterval,
+    public func yToPoint(
+        atIndex index: Int,
         scale: Scale,
         canvasSize size: CGSize
     ) -> CGPoint {
-        let y = (Double(scale.y.upperBound) - self) / scale.yAmplitiude * size.height
-        let x = (time - scale.x.lowerBound) / scale.xAmplitiude * size.width
-        return .init(x: x, y: y)
+        .init(
+            x: scale.x(index, size: size),
+            y: scale.y(self, size: size)
+        )
     }
 }
 

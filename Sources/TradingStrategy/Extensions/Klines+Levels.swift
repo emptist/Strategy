@@ -2,12 +2,14 @@ import Foundation
 
 /// **Touch event for a Support/Resistance Level**
 public struct Touch {
+    public let index: Int
     public let time: TimeInterval
     public let closePrice: Double
 }
 
 /// **Support/Resistance Level with Touch Data**
 public struct Level {
+    public let index: Int
     public let time: TimeInterval
     public var touches: [Touch]
     
@@ -54,9 +56,9 @@ public extension [Klines] {
             if current.priceLow <= minLow {
                 let touches = self.compactMap { candle -> Touch? in
                     guard abs(candle.priceLow - minLow) / minLow <= dynamicTolerance else { return nil }
-                    return Touch(time: candle.timeOpen, closePrice: candle.priceClose)
+                    return Touch(index: i, time: candle.timeOpen, closePrice: candle.priceClose)
                 }
-                supports.append((i, Level(time: current.timeOpen, touches: touches)))
+                supports.append((i, Level(index: i, time: current.timeOpen, touches: touches)))
             }
         }
         return supports
@@ -80,9 +82,9 @@ public extension [Klines] {
             if current.priceHigh >= maxHigh {
                 let touches = self.compactMap { candle -> Touch? in
                     guard abs(candle.priceHigh - maxHigh) / maxHigh <= dynamicTolerance else { return nil }
-                    return Touch(time: candle.timeOpen, closePrice: candle.priceClose)
+                    return Touch(index: i, time: candle.timeOpen, closePrice: candle.priceClose)
                 }
-                resistances.append((i, Level(time: current.timeOpen, touches: touches)))
+                resistances.append((i, Level(index: i, time: current.timeOpen, touches: touches)))
             }
         }
         return resistances

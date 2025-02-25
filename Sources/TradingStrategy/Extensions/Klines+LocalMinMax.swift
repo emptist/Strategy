@@ -39,13 +39,13 @@ public extension [Klines] {
         // Map minima to points
         let minimaPoints = minimaIndices.map { index in
             let candle = self[index]
-            return candle.priceClose.toPoint(atTime: candle.timeCenter, scale: scale, canvasSize: size)
+            return candle.priceClose.yToPoint(atIndex: index, scale: scale, canvasSize: size)
         }
         
         // Map maxima to points
         let maximaPoints = maximaIndices.map { index in
             let candle = self[index]
-            return candle.priceClose.toPoint(atTime: candle.timeCenter, scale: scale, canvasSize: size)
+            return candle.priceClose.yToPoint(atIndex: index, scale: scale, canvasSize: size)
         }
         
         return (minimaPoints, maximaPoints)
