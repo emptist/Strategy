@@ -91,7 +91,7 @@ public extension [Klines] {
     ///   - period: Minimum phase length before merging (default: 8).
     ///   - sma: Short-term moving average values corresponding to each candle.
     /// - Returns: A list of detected market **phases** (uptrend, downtrend, sideways).
-    func detectPhasesUsingMovingAverage(period: Int = 8, shortTermMA sma: [Double]) -> [Phase] {
+    func detectPhasesUsingMovingAverage(period: Int = 8, shortTermMA sma: [Double], scale: Scale) -> [Phase] {
         guard count > period else { return [] }
         
         var phases: [Phase] = []
@@ -102,8 +102,10 @@ public extension [Klines] {
             let price = self[i].priceClose
             let maValue = sma[i]
             let newPhase: PhaseType
-            
-            if abs(price - maValue) < (price * 0.001) {
+            let yRange = scale.y.upperBound - scale.y.lowerBound
+            let sidewaysThreshold = yRange * 0.05
+
+            if abs(price - maValue) < sidewaysThreshold {
                 newPhase = .sideways
             } else {
                 newPhase = price > maValue ? .uptrend : .downtrend
