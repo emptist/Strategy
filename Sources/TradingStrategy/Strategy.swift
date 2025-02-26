@@ -45,7 +45,7 @@ public protocol Strategy {
     /// Evaluates the number of units/contracts to trade based on available capital and market conditions.
     /// - Parameter portfolio: The total trading capital available (in USD).
     /// - Returns: The number of units/contracts to trade. Returns 0 if no trade should be taken.
-    func evaluateEntry(equity: Double) -> Int
+    func unitCount(equity: Double) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
     /// - Parameter entryBar: The candlestick representing the trade entry point.
