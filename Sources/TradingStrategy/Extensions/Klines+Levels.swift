@@ -37,15 +37,29 @@ public struct SupportResistance {
 }
 
 public extension [Klines] {
+    /// **Generates SR levels with touch history**
+    /// Iterates in reverse to pick the most recent numPairs.
+    func generateSRLevels(numPairs: Int = 3, windowSize: Int = 12) -> SupportResistance {
+        let factor = optimizeFactor(windowSize: windowSize)
+        let pairs = srPairs(windowSize: windowSize, factor: factor)
+        guard !pairs.isEmpty else { return SupportResistance() }
+        
+        // Take the first numPairs from the reverse-ordered pairs (most recent first).
+        let selectedPairs = pairs.prefix(numPairs).reversed()
+        let supports = selectedPairs.map { $0.0.level }
+        let resistances = selectedPairs.map { $0.1.level }
+        
+        return SupportResistance(support: supports, resistance: resistances)
+    }
     
     /// **Detects support levels using a dynamic tolerance based on volatility * factor**
-    func candidateSupportPivots(windowSize: Int = 10, factor: Double) -> [(index: Int, level: Level)] {
+    private func candidateSupportPivots(windowSize: Int, factor: Double) -> [(index: Int, level: Level)] {
         guard count > windowSize * 2 else { return [] }
         var supports: [(index: Int, level: Level)] = []
         
-        for i in windowSize..<count - windowSize {
+        for i in windowSize ..< (count - windowSize) {
             let windowCandles = self[(i - windowSize)...(i + windowSize)]
-            let minLow = windowCandles.map { $0.priceLow }.min()!
+            guard let minLow = windowCandles.map { $0.priceLow }.min() else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {
                 $0 + ( ($1.priceHigh - $1.priceLow) / $1.priceLow )
@@ -65,13 +79,13 @@ public extension [Klines] {
     }
     
     /// **Detects resistance levels using a dynamic tolerance based on volatility * factor**
-    func candidateResistancePivots(windowSize: Int = 10, factor: Double) -> [(index: Int, level: Level)] {
+    private func candidateResistancePivots(windowSize: Int, factor: Double) -> [(index: Int, level: Level)] {
         guard count > windowSize * 2 else { return [] }
         var resistances: [(index: Int, level: Level)] = []
         
-        for i in windowSize..<count - windowSize {
+        for i in windowSize ..< (count - windowSize) {
             let windowCandles = self[(i - windowSize)...(i + windowSize)]
-            let maxHigh = windowCandles.map { $0.priceHigh }.max()!
+            guard let maxHigh = windowCandles.map { $0.priceHigh }.max()  else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {
                 $0 + ( ($1.priceHigh - $1.priceLow) / $1.priceHigh )
@@ -92,7 +106,7 @@ public extension [Klines] {
     
     /// **Pairs supports with the first resistance that comes later**
     /// Iterates supports in reverse (most recent first) to capture current market behavior.
-    func srPairs(windowSize: Int = 10, factor: Double) -> [((index: Int, level: Level), (index: Int, level: Level))] {
+    private func srPairs(windowSize: Int, factor: Double) -> [((index: Int, level: Level), (index: Int, level: Level))] {
         let supports = candidateSupportPivots(windowSize: windowSize, factor: factor)
         let resistances = candidateResistancePivots(windowSize: windowSize, factor: factor)
         
@@ -110,23 +124,8 @@ public extension [Klines] {
         return pairs
     }
     
-    /// **Generates SR levels with touch history**
-    /// Iterates in reverse to pick the most recent numPairs.
-    func generateSRLevels(numPairs: Int = 3, windowSize: Int = 12) -> SupportResistance {
-        let factor = optimizeFactor(windowSize: windowSize)
-        let pairs = srPairs(windowSize: windowSize, factor: factor)
-        guard !pairs.isEmpty else { return SupportResistance() }
-        
-        // Take the first numPairs from the reverse-ordered pairs (most recent first).
-        let selectedPairs = pairs.prefix(numPairs).reversed()
-        let supports = selectedPairs.map { $0.0.level }
-        let resistances = selectedPairs.map { $0.1.level }
-        
-        return SupportResistance(support: supports, resistance: resistances)
-    }
-    
     /// **Auto-trains the factor using a grid search over historical data**
-    func optimizeFactor(windowSize: Int = 10) -> Double {
+    private func optimizeFactor(windowSize: Int) -> Double {
         let candidateFactors = stride(from: 0.1, through: 1.0, by: 0.1)
         var bestFactor: Double = 0.5
         var bestScore = Double.greatestFiniteMagnitude
@@ -142,7 +141,7 @@ public extension [Klines] {
     }
 
     /// **Evaluates a factor using a custom performance metric**
-    func evaluateFactor(_ factor: Double, windowSize: Int) -> Double {
+    private func evaluateFactor(_ factor: Double, windowSize: Int) -> Double {
         // Example metric: minimize imbalance between detected support and resistance counts.
         let supports = candidateSupportPivots(windowSize: windowSize, factor: factor)
         let resistances = candidateResistancePivots(windowSize: windowSize, factor: factor)
