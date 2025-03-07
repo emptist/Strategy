@@ -8,6 +8,8 @@ public protocol Klines {
     var priceHigh: Double  { get set }
     var priceLow: Double  { get set }
     var priceClose: Double  { get set }
+    
+    var volume: Double?  { get set }
 }
 
 public extension Klines {

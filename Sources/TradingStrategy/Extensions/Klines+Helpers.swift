@@ -9,7 +9,8 @@ public extension [Klines] {
         guard count >= period else { return nil }
         
         // Sum up the closing prices of the last 'period' candles
-        let sum = self.suffix(period).reduce(0.0) { $0 + $1.priceClose }
+        let slice = Array(self.suffix(period))
+        let sum = slice.reduce(0.0) { $0 + $1.priceClose }
         
         // Divide by the period to get the average
         return sum / Double(period)
@@ -22,7 +23,8 @@ public extension [Klines] {
             if i < period - 1 {
                 smaValues.append(0) // Not enough data to calculate SMA
             } else {
-                let sum = self[(i - period + 1)...i].reduce(0.0, { $0 + $1.priceClose })
+                let slice = Array(self[(i - period + 1)...i])
+                let sum = slice.reduce(0.0) { $0 + $1.priceClose }
                 let average = sum / Double(period)
                 smaValues.append(average)
             }
@@ -54,13 +56,14 @@ public extension [Klines] {
         for i in stride(from: period, to: count, by: 1) {
             let startIndex = i - period
             let endIndex = i
-            let slice = self[startIndex..<endIndex]
+            let slice = Array(self[startIndex..<endIndex])
             let closingPrices = slice.map { $0.priceClose }
             
             let sum = closingPrices.reduce(0, +)
             let mean = sum / Double(period)
             
-            let variance = closingPrices.map { pow($0 - mean, 2) }.reduce(0, +) / Double(period)
+            let slice2 = closingPrices.map { pow($0 - mean, 2) }
+            let variance = slice2.reduce(0, +) / Double(period)
             let standardDeviation = sqrt(variance)
             
             middleBand[i] = mean
@@ -92,7 +95,8 @@ public extension [Klines] {
                 atrValues.append(0) // Not enough data to calculate ATR
             } else if i == period - 1 {
                 // The first ATR value is the average of the first 'period' TR values
-                let sumOfInitialTRs = trValues[0...i].reduce(0, +)
+                let slice = trValues[0...i]
+                let sumOfInitialTRs = slice.reduce(0, +)
                 atrValues.append(sumOfInitialTRs / Double(period))
             } else {
                 // Subsequent ATR values are calculated using the formula
