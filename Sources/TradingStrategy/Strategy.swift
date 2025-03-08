@@ -9,6 +9,9 @@ public protocol Strategy {
     /// The list of historical candlestick data used by the strategy.
     var candles: [Klines] { get }
     
+    /// The chart scale used for strategy
+    var scale: Scale { get }
+    
     /// The detected market phases based on price action and trend analysis.
     var phases: [Phase] { get }
     
