@@ -5,6 +5,12 @@ public struct Touch {
     public let index: Int
     public let time: TimeInterval
     public let closePrice: Double
+    
+    public init(index: Int, time: TimeInterval, closePrice: Double) {
+        self.index = index
+        self.time = time
+        self.closePrice = closePrice
+    }
 }
 
 /// **Support/Resistance Level with Touch Data**
@@ -12,6 +18,12 @@ public struct Level {
     public let index: Int
     public let time: TimeInterval
     public var touches: [Touch]
+    
+    public init(index: Int, time: TimeInterval, touches: [Touch]) {
+        self.index = index
+        self.time = time
+        self.touches = touches
+    }
     
     public var level: Double {
         guard !touches.isEmpty else { return 0.0 }
