@@ -38,6 +38,27 @@ public extension [Klines] {
             .simpleMovingAverage(period: period)
     }
     
+    func exponentialMovingAverage(period: Int) -> [Double] {
+        guard count >= period else { return [] }
+        
+        var emaValues: [Double] = []
+        let smoothingFactor = 2.0 / (Double(period) + 1.0)
+        
+        // Initialize the first EMA value with the SMA of the first 'period' candles
+        let firstSMA = simpleMovingAverage(period: period).prefix(period).last ?? 0.0
+        emaValues.append(firstSMA)
+        
+        // Calculate EMA for the rest of the candles
+        for i in period..<count {
+            let currentPrice = self[i].priceClose
+            let previousEMA = emaValues.last ?? currentPrice
+            let ema = (currentPrice * smoothingFactor) + (previousEMA * (1 - smoothingFactor))
+            emaValues.append(ema)
+        }
+        
+        return emaValues
+    }
+    
     func rateOfChange(period: Int) -> [Double] {
         var roc = [Double](repeating: 0.0, count: count)
         for i in period..<count {
