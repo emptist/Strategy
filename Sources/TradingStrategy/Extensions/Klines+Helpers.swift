@@ -41,12 +41,9 @@ public extension [Klines] {
     func exponentialMovingAverage(period: Int) -> [Double] {
         guard count >= period else { return [] }
         
-        var emaValues: [Double] = []
-        let smoothingFactor = 2.0 / (Double(period) + 1.0)
-        
         // Initialize the first EMA value with the SMA of the first 'period' candles
-        let firstSMA = simpleMovingAverage(period: period).prefix(period).last ?? 0.0
-        emaValues.append(firstSMA)
+        var emaValues: [Double] = Array(prefix(period)).simpleMovingAverage(period: period) ?? []
+        let smoothingFactor = 2.0 / (Double(period) + 1.0)
         
         // Calculate EMA for the rest of the candles
         for i in period..<count {
