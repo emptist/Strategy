@@ -76,7 +76,7 @@ public extension [Klines] {
         
         // **Ensure last phase is appended without blinking**
         let currentPhaseRange = startIdx...(count - 1)
-        if let lastPhase = phases.last, lastPhase.type == currentPhase, currentPhaseRange.length < minPhaseLength {
+        if let lastPhase = phases.last, currentPhaseRange.length < minPhaseLength {
             // Extend the existing last phase to include new candles
             phases[phases.count - 1] = Phase(type: lastPhase.type, range: lastPhase.range.lowerBound...(count - 1))
         } else {
