@@ -70,7 +70,7 @@ public extension [Klines] {
         var supports: [(index: Int, level: Level)] = []
         
         for i in windowSize ..< (count - windowSize) {
-            let windowCandles = Array(self[(i - windowSize)...(i + windowSize)])
+            let windowCandles = self[(i - windowSize)...(i + windowSize)].map { $0 }
             guard let minLow = windowCandles.map { $0.priceLow }.min() else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {
@@ -96,7 +96,7 @@ public extension [Klines] {
         var resistances: [(index: Int, level: Level)] = []
         
         for i in windowSize ..< (count - windowSize) {
-            let windowCandles = Array(self[(i - windowSize)...(i + windowSize)])
+            let windowCandles = self[(i - windowSize)...(i + windowSize)].map { $0 }
             guard let maxHigh = windowCandles.map { $0.priceHigh }.max()  else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {

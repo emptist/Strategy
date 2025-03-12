@@ -11,7 +11,7 @@ public extension [Klines] {
         
         var i = windowSize
         while i < count - windowSize {
-            let window = self[(i - windowSize)...(i + windowSize)]
+            let window = self[(i - windowSize)...(i + windowSize)].map { $0 }
             let closePrices = window.map { $0.priceClose }
             let midIndex = i
             let currentClose = self[midIndex].priceClose

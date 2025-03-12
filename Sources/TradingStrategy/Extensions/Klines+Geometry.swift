@@ -41,7 +41,7 @@ public extension Array where Element == CGPoint {
 
         var i = windowSize
         while i < count - windowSize {
-            let window = self[(i - windowSize)...(i + windowSize)]
+            let window = self[(i - windowSize)...(i + windowSize)].map { $0 }
             let yValues = window.map { $0.y }
             let midIndex = i
             let currentY = self[midIndex].y
