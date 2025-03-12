@@ -1,18 +1,5 @@
 import Foundation
 
-extension Double {
-    public func yToPoint(
-        atIndex index: Int,
-        scale: Scale,
-        canvasSize size: CGSize
-    ) -> CGPoint {
-        .init(
-            x: scale.x(index, size: size),
-            y: scale.y(self, size: size)
-        )
-    }
-}
-
 public extension Array where Element == CGPoint {
     func simplifyLine(epsilon: Double = 38, windowSize: Int = 10, significanceThreshold: Double = 0.02) -> [PhaseLinePoint] {
         guard count > 2 else {

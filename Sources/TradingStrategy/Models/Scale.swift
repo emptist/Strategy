@@ -1,12 +1,31 @@
 import Foundation
 
+extension Double {
+    public func yToPoint(
+        atIndex index: Int,
+        scale: Scale,
+        canvasSize size: CGSize
+    ) -> CGPoint {
+        .init(
+            x: scale.x(index, size: size),
+            y: scale.y(self, size: size)
+        )
+    }
+}
+
 public struct Scale: Equatable {
     public var x: Range<Int>
     public var y: Range<Double>
+    public let candlesPerScreen: Int
     
-    public init(x: Range<Int> = 0..<80, y: Range<Double> = 40000..<50000) {
+    public init(
+        x: Range<Int> = 0..<80,
+        y: Range<Double> = 40000..<50000,
+        candlesPerScreen: Int = 80
+    ) {
         self.x = x
         self.y = y
+        self.candlesPerScreen = candlesPerScreen
     }
     
     public init(data: [Klines], candlesPerScreen: Int = 80) {
@@ -35,7 +54,7 @@ public struct Scale: Equatable {
         yScaleStart -= verticalPadding
         yScaleEnd += verticalPadding
         
-        self.init(x: xScale, y: yScaleStart ..< yScaleEnd)
+        self.init(x: xScale, y: yScaleStart ..< yScaleEnd, candlesPerScreen: candlesPerScreen)
     }
     
     public var xGuideStep: Int {
@@ -46,50 +65,50 @@ public struct Scale: Equatable {
         (y.upperBound - y.lowerBound) / 10.0
     }
     
-    public var xAmplitiude: Double {
+    public var xAmplitude: Double {
         Swift.max(0.001, Double(x.upperBound - x.lowerBound))
     }
     
-    public var yAmplitiude: Double {
+    public var yAmplitude: Double {
         Swift.max(0.001, Double(y.upperBound - y.lowerBound))
     }
     
     public var amplitiude: CGSize {
-        .init(width: xAmplitiude, height: yAmplitiude)
+        .init(width: xAmplitude, height: yAmplitude)
     }
     
     public func x(_ index: Int, size: CGSize) -> Double {
-        Double(index - self.x.lowerBound) / xAmplitiude * size.width
+        Double(index - self.x.lowerBound) / xAmplitude * size.width
     }
     
     public func y(_ y: Double, size: CGSize) -> Double {
-        (Double(self.y.upperBound) - y) / yAmplitiude * size.height
+        (Double(self.y.upperBound) - y) / yAmplitude * size.height
     }
     
     public func width(_ candleCount: Int, size: CGSize) -> Double {
         guard !size.width.isNaN else { return 0 }
-        return (Double(candleCount) / xAmplitiude) * size.width
+        return (Double(candleCount) / xAmplitude) * size.width
     }
     
     public func index(forX xValue: Double, size: CGSize) -> Int {
         guard !xValue.isNaN, !size.width.isNaN, size.width != 0 else { return x.lowerBound }
-        let index = x.lowerBound + Int((xValue / size.width) * xAmplitiude)
+        let index = x.lowerBound + Int((xValue / size.width) * xAmplitude)
         return min(max(x.lowerBound, index), x.upperBound - 1)
     }
     
     public func barCount(forLength length: Double, size: CGSize) -> Int {
         guard !length.isNaN, !size.width.isNaN, size.width != 0 else { return 1 }
-        return max(1, Int((length / size.width) * xAmplitiude))
+        return max(1, Int((length / size.width) * xAmplitude))
     }
     
     public func height(_ height: Double, size: CGSize) -> Double {
         guard !height.isNaN, !size.height.isNaN else { return 0 }
-        return height / yAmplitiude * size.height
+        return height / yAmplitude * size.height
     }
     
     public func price(fromHeight height: Double, size: CGSize) -> Double {
         guard !height.isNaN, !size.height.isNaN, size.height != 0 else { return y.upperBound }
-        return y.upperBound - (height / size.height) * yAmplitiude
+        return y.upperBound - (height / size.height) * yAmplitude
     }
 
 }
