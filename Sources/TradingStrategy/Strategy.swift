@@ -39,3 +39,9 @@ public protocol Strategy {
     /// Determines whether the trade should be exited based on strategy conditions.
     func shouldExit(entryBar: Klines) -> Bool
 }
+
+public extension Strategy {
+    var candles: [Klines] {
+        charts.first ?? []
+    }
+}
