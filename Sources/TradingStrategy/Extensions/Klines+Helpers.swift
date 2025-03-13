@@ -9,8 +9,7 @@ public extension [Klines] {
         guard count >= period else { return nil }
         
         // Sum up the closing prices of the last 'period' candles
-        let slice = Array(self.suffix(period))
-        let sum = slice.reduce(0.0) { $0 + $1.priceClose }
+        let sum = self.suffix(period).reduce(0.0) { $0 + $1.priceClose }
         
         // Divide by the period to get the average
         return sum / Double(period)
@@ -23,8 +22,7 @@ public extension [Klines] {
             if i < period - 1 {
                 smaValues.append(0) // Not enough data to calculate SMA
             } else {
-                let slice = Array(self[(i - period + 1)...i])
-                let sum = slice.reduce(0.0) { $0 + $1.priceClose }
+                let sum = self[(i - period + 1)...i].reduce(0.0) { $0 + $1.priceClose }
                 let average = sum / Double(period)
                 smaValues.append(average)
             }
@@ -74,8 +72,7 @@ public extension [Klines] {
         for i in stride(from: period, to: count, by: 1) {
             let startIndex = i - period
             let endIndex = i
-            let slice = Array(self[startIndex..<endIndex])
-            let closingPrices = slice.map { $0.priceClose }
+            let closingPrices = self[startIndex..<endIndex].map { $0.priceClose }
             
             let sum = closingPrices.reduce(0, +)
             let mean = sum / Double(period)

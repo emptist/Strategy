@@ -34,7 +34,8 @@ public struct Scale: Equatable {
             return
         }
         
-        var xScale = max(0, data.count - candlesPerScreen) ..< max(data.count, 80)
+        let horizontalPadding: Int = 10
+        var xScale = (max(0, data.count - candlesPerScreen) + horizontalPadding) ..< (max(data.count, 80) + horizontalPadding)
         var yScaleStart: Double
         var yScaleEnd: Double
         if data.count > candlesPerScreen {

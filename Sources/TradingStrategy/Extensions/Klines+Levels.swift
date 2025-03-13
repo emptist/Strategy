@@ -37,31 +37,20 @@ public struct Level {
     }
 }
 
-/// **Container for Support & Resistance Levels**
-public struct SupportResistance {
-    public var support: [Level]
-    public var resistance: [Level]
-    
-    public init(support: [Level] = [], resistance: [Level] = []) {
-        self.support = support
-        self.resistance = resistance
-    }
-}
-
 public extension [Klines] {
     /// **Generates SR levels with touch history**
     /// Iterates in reverse to pick the most recent numPairs.
-    func generateSRLevels(numPairs: Int = 3, windowSize: Int = 12) -> SupportResistance {
+    func generateSRLevels(numPairs: Int = 3, windowSize: Int = 12) -> [Level] {
         let factor = optimizeFactor(windowSize: windowSize)
         let pairs = srPairs(windowSize: windowSize, factor: factor)
-        guard !pairs.isEmpty else { return SupportResistance() }
+        guard !pairs.isEmpty else { return [] }
         
         // Take the first numPairs from the reverse-ordered pairs (most recent first).
         let selectedPairs = pairs.prefix(numPairs).reversed()
         let supports = selectedPairs.map { $0.0.level }
         let resistances = selectedPairs.map { $0.1.level }
         
-        return SupportResistance(support: supports, resistance: resistances)
+        return supports + resistances
     }
     
     /// **Detects support levels using a dynamic tolerance based on volatility * factor**
@@ -70,7 +59,7 @@ public extension [Klines] {
         var supports: [(index: Int, level: Level)] = []
         
         for i in windowSize ..< (count - windowSize) {
-            let windowCandles = self[(i - windowSize)...(i + windowSize)].map { $0 }
+            let windowCandles = self[(i - windowSize)...(i + windowSize)]
             guard let minLow = windowCandles.map { $0.priceLow }.min() else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {
@@ -96,7 +85,7 @@ public extension [Klines] {
         var resistances: [(index: Int, level: Level)] = []
         
         for i in windowSize ..< (count - windowSize) {
-            let windowCandles = self[(i - windowSize)...(i + windowSize)].map { $0 }
+            let windowCandles = self[(i - windowSize)...(i + windowSize)]
             guard let maxHigh = windowCandles.map { $0.priceHigh }.max()  else { continue }
             
             let avgVolatility = windowCandles.reduce(0.0) {
