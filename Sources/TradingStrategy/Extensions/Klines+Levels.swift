@@ -40,112 +40,57 @@ public struct Level {
 public extension [Klines] {
     /// **Generates SR levels with touch history**
     /// Iterates in reverse to pick the most recent numPairs.
-    func generateSRLevels(numPairs: Int = 3, windowSize: Int = 12) -> [Level] {
-        let factor = optimizeFactor(windowSize: windowSize)
-        let pairs = srPairs(windowSize: windowSize, factor: factor)
-        guard !pairs.isEmpty else { return [] }
+    func generateSRLevels(numPairs: Int = 2, windowSize: Int = 12, scale: Scale, chartSize: CGSize) -> [Level] {
+        var supportLevels: [Level] = []
+        var resistanceLevels: [Level] = []
+        var processedPairs = 0
         
-        // Take the first numPairs from the reverse-ordered pairs (most recent first).
-        let selectedPairs = pairs.prefix(numPairs).reversed()
-        let supports = selectedPairs.map { $0.0.level }
-        let resistances = selectedPairs.map { $0.1.level }
+        // Ensure there are enough candles to process
+        guard self.count > windowSize, numPairs > 0 else { return [] }
         
-        return supports + resistances
-    }
-    
-    /// **Detects support levels using a dynamic tolerance based on volatility * factor**
-    private func candidateSupportPivots(windowSize: Int, factor: Double) -> [(index: Int, level: Level)] {
-        guard count > windowSize * 2 else { return [] }
-        var supports: [(index: Int, level: Level)] = []
+        // Commit last candle as "entry" and do not affect SR levels
+        let lastCandle = self.last
+        let candlesToProcess = self.dropLast()
         
-        for i in windowSize ..< (count - windowSize) {
-            let windowCandles = self[(i - windowSize)...(i + windowSize)]
-            guard let minLow = windowCandles.map { $0.priceLow }.min() else { continue }
+        // Iterate over the candles in reverse and stop once numPairs pairs are found
+        for i in stride(from: candlesToProcess.count - windowSize - 1, through: 0, by: -1) {
+            guard i >= 0, i + windowSize <= candlesToProcess.count else { continue }
             
-            let avgVolatility = windowCandles.reduce(0.0) {
-                $0 + ( ($1.priceHigh - $1.priceLow) / $1.priceLow )
-            } / Double(windowCandles.count)
-            let dynamicTolerance = avgVolatility * factor
+            let window = candlesToProcess[i..<(i + windowSize)]
             
-            let current = self[i]
-            if current.priceLow <= minLow {
-                let touches = self.compactMap { candle -> Touch? in
-                    guard abs(candle.priceLow - minLow) / minLow <= dynamicTolerance else { return nil }
-                    return Touch(index: i, time: candle.timeOpen, closePrice: candle.priceClose)
-                }
-                supports.append((i, Level(index: i, time: current.timeOpen, touches: touches)))
+            guard let high = window.max(by: { $0.priceHigh < $1.priceHigh })?.priceHigh,
+                  let low = window.min(by: { $0.priceLow < $1.priceLow })?.priceLow else {
+                continue
+            }
+            
+            // Ensure resistance levels are distinct and not clustered too close
+            if let existingResistanceIndex = resistanceLevels.firstIndex(where: { abs($0.level - high) < scale.yGuideStep * 2 }) {
+                resistanceLevels[existingResistanceIndex].touches.append(Touch(index: i, time: candlesToProcess[i].timeOpen, closePrice: high))
+            } else {
+                resistanceLevels.append(Level(index: i, time: candlesToProcess[i].timeOpen, touches: [Touch(index: i, time: candlesToProcess[i].timeOpen, closePrice: high)]))
+            }
+            
+            // Ensure support levels are distinct and not clustered too close
+            if let existingSupportIndex = supportLevels.firstIndex(where: { abs($0.level - low) < scale.yGuideStep * 2 }) {
+                supportLevels[existingSupportIndex].touches.append(Touch(index: i, time: candlesToProcess[i].timeOpen, closePrice: low))
+            } else {
+                supportLevels.append(Level(index: i, time: candlesToProcess[i].timeOpen, touches: [Touch(index: i, time: candlesToProcess[i].timeOpen, closePrice: low)]))
+            }
+            
+            // Only count pairs where both support and resistance exist, and each has at least two touch points
+            if let lastResistance = resistanceLevels.last, let lastSupport = supportLevels.last,
+               lastResistance.touches.count >= 2, lastSupport.touches.count >= 2 {
+                processedPairs += 1
+            }
+            
+            if processedPairs >= numPairs {
+                break
             }
         }
-        return supports
-    }
-    
-    /// **Detects resistance levels using a dynamic tolerance based on volatility * factor**
-    private func candidateResistancePivots(windowSize: Int, factor: Double) -> [(index: Int, level: Level)] {
-        guard count > windowSize * 2 else { return [] }
-        var resistances: [(index: Int, level: Level)] = []
         
-        for i in windowSize ..< (count - windowSize) {
-            let windowCandles = self[(i - windowSize)...(i + windowSize)]
-            guard let maxHigh = windowCandles.map { $0.priceHigh }.max()  else { continue }
-            
-            let avgVolatility = windowCandles.reduce(0.0) {
-                $0 + ( ($1.priceHigh - $1.priceLow) / $1.priceHigh )
-            } / Double(windowCandles.count)
-            let dynamicTolerance = avgVolatility * factor
-            
-            let current = self[i]
-            if current.priceHigh >= maxHigh {
-                let touches = self.compactMap { candle -> Touch? in
-                    guard abs(candle.priceHigh - maxHigh) / maxHigh <= dynamicTolerance else { return nil }
-                    return Touch(index: i, time: candle.timeOpen, closePrice: candle.priceClose)
-                }
-                resistances.append((i, Level(index: i, time: current.timeOpen, touches: touches)))
-            }
-        }
-        return resistances
-    }
-    
-    /// **Pairs supports with the first resistance that comes later**
-    /// Iterates supports in reverse (most recent first) to capture current market behavior.
-    private func srPairs(windowSize: Int, factor: Double) -> [((index: Int, level: Level), (index: Int, level: Level))] {
-        let supports = candidateSupportPivots(windowSize: windowSize, factor: factor)
-        let resistances = candidateResistancePivots(windowSize: windowSize, factor: factor)
-        
-        // Sort supports descending to prioritize the most recent ones.
-        let sortedSupports = supports.sorted { $0.index > $1.index }
-        // Keep resistances sorted in ascending order.
-        let sortedResistances = resistances.sorted { $0.index < $1.index }
-        
-        var pairs: [((index: Int, level: Level), (index: Int, level: Level))] = []
-        for support in sortedSupports {
-            if let resistance = sortedResistances.first(where: { $0.index > support.index }) {
-                pairs.append((support, resistance))
-            }
-        }
-        return pairs
-    }
-    
-    /// **Auto-trains the factor using a grid search over historical data**
-    private func optimizeFactor(windowSize: Int) -> Double {
-        let candidateFactors = stride(from: 0.1, through: 1.0, by: 0.1)
-        var bestFactor: Double = 0.5
-        var bestScore = Double.greatestFiniteMagnitude
-        
-        for factor in candidateFactors {
-            let score = evaluateFactor(factor, windowSize: windowSize)
-            if score < bestScore {
-                bestScore = score
-                bestFactor = factor
-            }
-        }
-        return bestFactor
-    }
-
-    /// **Evaluates a factor using a custom performance metric**
-    private func evaluateFactor(_ factor: Double, windowSize: Int) -> Double {
-        // Example metric: minimize imbalance between detected support and resistance counts.
-        let supports = candidateSupportPivots(windowSize: windowSize, factor: factor)
-        let resistances = candidateResistancePivots(windowSize: windowSize, factor: factor)
-        return abs(Double(supports.count - resistances.count))
+        // Ensure we return an equal number of support and resistance levels
+        let count = Swift.min(supportLevels.count, resistanceLevels.count, numPairs)
+        let result: [Level] = supportLevels.prefix(count) + resistanceLevels.prefix(count).map { $0 }
+        return result.sorted { $0.level < $1.level }
     }
 }
