@@ -275,4 +275,20 @@ public extension [Klines] {
             return trueConditions > 1
         }
     }
+    
+    // MARK: Compute VWAP
+    
+    public func computeVWAP() -> [Double] {
+        var cumulativeVWAP: [Double] = []
+        var cumulativeVolume: Double = 0
+        var cumulativePriceVolume: Double = 0
+        
+        for candle in self {
+            guard let volume = candle.volume else { continue }
+            cumulativeVolume += volume
+            cumulativePriceVolume += ((candle.priceHigh + candle.priceLow + candle.priceClose) / 3.0) * volume
+            cumulativeVWAP.append(cumulativePriceVolume / cumulativeVolume)
+        }
+        return cumulativeVWAP
+    }
 }
