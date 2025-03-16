@@ -31,7 +31,7 @@ public protocol Strategy {
     init(candles: [Klines])
     
     /// Evaluates the number of units/contracts to trade based on available capital.
-    func unitCount(equity: Double, feePerUnit cost: Double) -> Int
+    func unitCount(entryBar: Klines, equity: Double, feePerUnit cost: Double) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
     func adjustStopLoss(entryBar: Klines) -> Double?
