@@ -1,101 +1,200 @@
-# Strategy Protocol and Utilities Library
+# **Strategy Protocol and Utilities Library**
 
-## Introduction
+## **Introduction**
 This repository provides a flexible and powerful framework for financial strategy development and testing, designed specifically for use with Swift. It includes a standard `Strategy` protocol and a suite of utility functions to assist in strategy analysis and decision-making based on technical indicators.
 
-## Key Features
+## **Key Features**
 - **Strategy Protocol**: A protocol to standardize the development of trading strategies.
 - **Decision Engine & Position Management**: Integrated modules for evaluating trade entry conditions and managing stop-losses dynamically.
 - **Utility Functions**: A comprehensive collection of functions to calculate various technical indicators such as SMA (Simple Moving Average), Bollinger Bands, ROC (Rate of Change), and more.
 - **Persistent Trade Storage**: Ensures trades can be restored after a crash or app restart.
+- **Dynamic Strategy Loading**: Strategies can be compiled as `.dylib` files and loaded dynamically into the **TradeUI** application.
+- **Integration with TradeUI**: The strategies built using this repository can be used within the [TradeUI application](https://github.com/TradeWithIt/TradeUI), allowing for real-time execution and visualization of trading strategies.
 
-## Strategy Protocol
-The `Strategy` protocol is designed for implementing trading strategies with an emphasis on candlestick data analysis. The protocol requires the following properties and methods:
+---
 
+## **📌 Generating a Dynamic Library (`.dylib`) for TradeUI**
+To allow your strategies to be dynamically loaded by **TradeUI**, you need to set up your **Swift Package** to produce a `.dylib`.
+
+### **📌 Step 1: Set Up Your Strategy Package (`Package.swift`)**
+Ensure that your Swift package is correctly set up to:
+- **Depend on the `Strategy` package.**
+- **Produce a `.dylib` instead of a static framework.**
+
+#### **Example `Package.swift` for a Custom Strategy Package**
 ```swift
-public protocol Strategy {
-    var candles: [Klines] { get }
-    var phases: [Phase] { get }
-    var longTermMA: [Double] { get }
-    var shortTermMA: [Double] { get }
-    var supportBars: [Klines] { get }
-    var supportPhases: [Phase] { get }
-    var supportScale: Scale { get }
-    var levels: SupportResistance { get }
-    var patternIdentified: Bool { get }
-    var patternInformation: [String: Bool] { get }
-    
-    init(candles: [Klines])
+// swift-tools-version: 5.9
+import PackageDescription
 
-    func evaluateEntry(portfolio: Double) -> Int
-    func adjustStopLoss(entryBar: Klines) -> Double?
-    func shouldExit(entryBar: Klines) -> Bool
+let package = Package(
+    name: "MyStrategyPackage",
+    products: [
+        // ✅ This produces a `.dylib` that can be dynamically loaded by TradeUI.
+        .library(name: "MyStrategyPackage", type: .dynamic, targets: ["MyStrategyPackage"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/TradeWithIt/Strategy.git", branch: "main"),
+    ],
+    targets: [
+        .target(
+            name: "MyStrategyPackage",
+            dependencies: [
+                .product(name: "TradingStrategy", package: "Strategy")
+            ]
+        ),
+        .testTarget(
+            name: "MyStrategyPackageTests",
+            dependencies: ["MyStrategyPackage"]),
+    ]
+)
+```
+
+---
+
+## **📌 Step 2: Implementing Strategy Registration**
+In your package, **you need to expose your strategies using C-compatible functions**. This allows TradeUI to discover and instantiate them dynamically.
+
+#### **Example Implementation**
+```swift
+import Foundation
+import TradingStrategy
+
+// ✅ Expose available strategies as a C-compatible string
+@_cdecl("getAvailableStrategies")
+public func getAvailableStrategies() -> UnsafeMutablePointer<CChar> {
+    let strategyList = ["ORB", "Surprise Bar"].joined(separator: ",")
+    print("📢 Available Strategies in dylib: \(strategyList)")
+    return strdup(strategyList)! // ✅ Ensure valid C string pointer
+}
+
+// ✅ Dynamically create a strategy by name
+@_cdecl("createStrategy")
+public func createStrategy(strategyName: UnsafePointer<CChar>) -> UnsafeRawPointer? {
+    let name = String(cString: strategyName).trimmingCharacters(in: .whitespacesAndNewlines)
+    print("🔍 Requested strategy: '\(name)'")
+
+    let factory: () -> Strategy = {
+        switch name {
+        case "ORB":
+            print("✅ Returning ORBStrategy instance")
+            return ORBStrategy(candles: [])
+        case "Surprise Bar":
+            print("✅ Returning SurpriseBarStrategy instance")
+            return SurpriseBarStrategy(candles: [])
+        default:
+            print("❌ Strategy not found: '\(name)'")
+            return ORBStrategy(candles: []) // Default or error handling
+        }
+    }
+
+    let boxedFactory = Box(factory)
+    return UnsafeRawPointer(Unmanaged.passRetained(boxedFactory).toOpaque()) // ✅ Ensure safe interop
+}
+
+// ✅ Helper class to store closures in an `Unmanaged` object
+class Box<T> {
+    let value: T
+    init(_ value: T) { self.value = value }
 }
 ```
 
-### Example Implementation
-Below is an example of a simple strategy conforming to the `Strategy` protocol:
+---
+
+## **📌 Step 3: Building and Using Your Strategy in TradeUI**
+### **Build the `.dylib`**
+Run the following command inside your **strategy package directory** to generate the `.dylib` file:
+```sh
+swift build -c release
+```
+- This will generate the `.dylib` file in the `.build/release` directory.
+
+### **Copy the `.dylib` to TradeUI**
+Once the `.dylib` is built, move it into the TradeUI strategies directory:
+```sh
+cp .build/release/libMyStrategyPackage.dylib ~/Downloads/Strategies/
+```
+
+### **Ensure TradeUI Can Find the `.dylib`**
+TradeUI looks for `.dylib` files in `~/Downloads/Strategies/` by default.
+1. **Make sure your `.dylib` is placed inside that folder.**
+2. **Restart TradeUI** to dynamically load the new strategies.
+
+---
+
+## **📌 Step 4: Loading Strategies in TradeUI**
+TradeUI automatically discovers and loads strategies from `.dylib` files.
+
+### **How Strategies Are Loaded**
+TradeUI will:
+1. **Find all `.dylib` files** in the `Strategies` folder.
+2. **Call `getAvailableStrategies()`** to list strategies inside each `.dylib`.
+3. **Call `createStrategy(strategyName:)`** to instantiate a strategy dynamically.
+4. **Register the strategy for use in the application.**
+
+### **Expected Log Output**
+If everything works correctly, TradeUI should print:
+```
+🔍 Loading strategies from /Downloads/Strategies/libMyStrategyPackage.dylib
+📢 Available Strategies in dylib: ORB, Surprise Bar
+✅ Successfully registered strategy: ORB
+✅ Successfully registered strategy: Surprise Bar
+```
+🚀 **Now your custom strategies are loaded into TradeUI!**  
+
+---
+
+## **📌 Example Strategy Implementation**
+Here’s an example of how to implement a simple strategy inside your package:
 
 ```swift
 import Foundation
+import TradingStrategy
 
-public struct ExampleStrat: Strategy {
-    public let candles: [Klines]
-    public var patternIdentified: Bool
-    public var patternInformation: [String: Bool]
+public struct ORBStrategy: Strategy {
+    public var charts: [[Klines]] = []
+    public var resolution: [Scale] = []
+    public var distribution: [[Phase]] = []
+    public var indicators: [[String: [Double]]] = []
+    public var levels: [Level] = []
+    public var patternIdentified: Bool = false
+    public var patternInformation: [String: Bool] = [:]
 
     public init(candles: [Klines]) {
-        self.candles = candles
-        self.patternIdentified = false
-        self.patternInformation = [:]
+        self.charts = [candles]
     }
 
-    public func evaluateEntry(portfolio: Double) -> Int {
-        // Example evaluation logic
-        return 0
+    public func unitCount(entryBar: Klines, equity: Double, feePerUnit cost: Double) -> Int {
+        return 10
     }
 
     public func adjustStopLoss(entryBar: Klines) -> Double? {
-        // Example stop-loss adjustment logic
         return nil
     }
 
     public func shouldExit(entryBar: Klines) -> Bool {
-        // Example exit condition logic
         return false
     }
 }
 ```
 
-## Utility Functions
-The library includes several extensions for arrays of `Klines`, providing calculations of various technical indicators. These functions aid in analyzing financial data to determine market trends and to make informed trading decisions.
+---
 
-### Technical Indicators
-- **Simple Moving Average (SMA)**
-- **Bollinger Bands**
-- **Rate of Change (ROC)**
-- **Average True Range (ATR)**
-- **Directional Indicators (+DI, -DI)**
-- **Average Directional Index (ADX)**
-- **Relative Strength Index (RSI)**
-- **Geometry Tools**
-- **Others**
+## **🚀 Final Summary**
+### **What You Need to Do**
+1️⃣ **Set up your package to generate a `.dylib`.**  
+2️⃣ **Implement `getAvailableStrategies()` and `createStrategy(strategyName:)`.**  
+3️⃣ **Compile the package using `swift build -c release`.**  
+4️⃣ **Move the `.dylib` into the TradeUI strategies folder.**  
+5️⃣ **Restart TradeUI to dynamically load your strategies.**  
 
-## Swift Package Manager
+---
 
-The [Swift Package Manager](https://swift.org/package-manager/) is a tool for automating the distribution of Swift code and is integrated into the Swift compiler.
+## **📌 Troubleshooting**
+- **Missing strategies in TradeUI?**  
+  → Check that the `.dylib` is inside `~/Downloads/Strategies/`  
+- **Type mismatch errors?**  
+  → Ensure your strategy struct **conforms to `Strategy`**.  
+- **TradeUI crashes when loading strategies?**  
+  → Use `print()` debugging inside `createStrategy()` to verify correct loading.  
 
-Once you have your Swift package set up, adding a dependency is as easy as adding it to the dependencies value of your Package.swift.
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/TradeWithIt/Strategy", branch: "main")
-]
-```
-
-## Contributions
-Contributions are welcome! If you have improvements or bug fixes, please submit a pull request or open an issue.
-
-## License
-This library is released under the MIT license. Please see the [LICENSE](LICENSE) file for more details.
-
+🚀 **Now, your package is correctly configured for TradeUI! Happy trading!** 🚀🔥
