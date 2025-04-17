@@ -1,10 +1,10 @@
-import Foundation
-
 /// A protocol defining the core structure for a trading strategy.
 ///
 /// Each strategy can have multiple charts, various indicators, and phases.
 /// It supports both single-chart and multi-chart strategies.
-public protocol Strategy {
+public protocol Strategy: Versioned {
+    /// A string containing the name of the strategy.
+    var name: String { get }
     
     /// The list of historical candlestick data per chart (Symbol -> Klines).
     var charts: [[Klines]] { get }
@@ -16,6 +16,7 @@ public protocol Strategy {
     var distribution: [[Phase]] { get }
     
     /// The computed indicators for each chart (Symbol -> Indicator Name -> Values).
+    /// `indicators.count` has to match `charts.count`
     var indicators: [[String: [Double]]] { get }
     
     /// The computed support and resistance levels for each chart.
@@ -31,13 +32,13 @@ public protocol Strategy {
     init(candles: [Klines])
     
     /// Evaluates the number of units/contracts to trade based on available capital.
-    func unitCount(entryBar: Klines, equity: Double, feePerUnit cost: Double) -> Int
+    func shouldEnterWitUnitCount(entryBar: Klines, equity: Double, feePerUnit cost: Double) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
     func adjustStopLoss(entryBar: Klines) -> Double?
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(entryBar: Klines) -> Bool
+    func shouldExit(entryBar: Klines, nextEvent event: Event) -> Bool
 }
 
 public extension Strategy {

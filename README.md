@@ -167,7 +167,11 @@ public struct ORBStrategy: Strategy {
         return 10
     }
 
-    public func adjustStopLoss(entryBar: Klines) -> Double? {
+    public func shouldEnterWitUnitCount(entryBar: Klines) -> Double? {
+        if shouldEnter { 
+            return calculateUnitCount()
+        }
+        // if not enter 
         return nil
     }
 
