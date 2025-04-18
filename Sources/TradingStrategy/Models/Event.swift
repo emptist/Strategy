@@ -1,10 +1,9 @@
 import Foundation
 
-public protocol Event {
+public protocol Annoucment {
     var interval: TimeInterval  { get }
     var impact: Impact { get }
 }
-
 
 public enum Impact {
     case high

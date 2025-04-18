@@ -36,14 +36,14 @@ public protocol Strategy: Versioned {
         entryBar: Klines,
         equity: Double,
         feePerUnit cost: Double,
-        nextEvent event: Event?
+        nextAnnoucment annoucment: Annoucment?
     ) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
     func adjustStopLoss(entryBar: Klines) -> Double?
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(entryBar: Klines, nextEvent event: Event?) -> Bool
+    func shouldExit(entryBar: Klines, nextAnnoucment annoucment: Annoucment?) -> Bool
 }
 
 public extension Strategy {
