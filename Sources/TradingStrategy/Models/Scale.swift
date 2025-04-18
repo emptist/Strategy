@@ -110,5 +110,4 @@ public struct Scale: Equatable {
         guard !height.isNaN, !size.height.isNaN, size.height != 0 else { return y.upperBound }
         return y.upperBound - (height / size.height) * yAmplitude
     }
-
 }

@@ -32,13 +32,18 @@ public protocol Strategy: Versioned {
     init(candles: [Klines])
     
     /// Evaluates the number of units/contracts to trade based on available capital.
-    func shouldEnterWitUnitCount(entryBar: Klines, equity: Double, feePerUnit cost: Double) -> Int
+    func shouldEnterWitUnitCount(
+        entryBar: Klines,
+        equity: Double,
+        feePerUnit cost: Double,
+        nextEvent event: Event?
+    ) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
     func adjustStopLoss(entryBar: Klines) -> Double?
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(entryBar: Klines, nextEvent event: Event) -> Bool
+    func shouldExit(entryBar: Klines, nextEvent event: Event?) -> Bool
 }
 
 public extension Strategy {
