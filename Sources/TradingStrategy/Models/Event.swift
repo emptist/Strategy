@@ -1,11 +1,11 @@
 import Foundation
 
 public protocol Annoucment: Sendable {
-    var interval: TimeInterval  { get }
-    var impact: Impact { get }
+    var timestamp: TimeInterval  { get }
+    var annoucmentImpact: AnnoucmentImpact { get }
 }
 
-public enum Impact {
+public enum AnnoucmentImpact {
     case high
     case medium
     case low
