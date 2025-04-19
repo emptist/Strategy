@@ -49,7 +49,6 @@ public extension [Klines] {
         guard self.count > windowSize, numPairs > 0 else { return [] }
         
         // Commit last candle as "entry" and do not affect SR levels
-        let lastCandle = self.last
         let candlesToProcess = self.dropLast()
         
         // Iterate over the candles in reverse and stop once numPairs pairs are found

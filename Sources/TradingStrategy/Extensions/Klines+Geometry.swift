@@ -76,10 +76,6 @@ public extension Array where Element == PhaseLinePoint {
             let prev = self[i - 1]
             let curr = self[i]
 
-            // **Detect movement type**
-            let xMove = abs(curr.0.x - prev.0.x)
-            let yMove = abs(curr.0.y - prev.0.y)
-
             let newPhase: PhaseType = curr.0.y > prev.0.y ? .downtrend : .uptrend
 
             // **Detect phase transitions**

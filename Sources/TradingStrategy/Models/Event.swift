@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Annoucment {
+public protocol Annoucment: Sendable {
     var interval: TimeInterval  { get }
     var impact: Impact { get }
 }

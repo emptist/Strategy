@@ -6,13 +6,10 @@ public extension [Klines] {
     /// - Parameter targetInterval: Desired bar duration (e.g., `900` for 15min, `3600` for 1h).
     /// - Returns: Aggregated Klines matching exact time intervals.
     func aggregateBars(to targetInterval: TimeInterval) -> [Klines] {
-        guard let firstBar = self.first else { return [] } // Safe check for empty array
+        guard let _ = self.first else { return [] } // Safe check for empty array
         
         var aggregatedBars: [Klines] = []
         var tempBar: Klines?
-        
-        // Find the first candle's start time and align to the fixed interval
-        let startAlignedTime = (floor(firstBar.timeOpen / targetInterval) * targetInterval)
 
         for bar in self {
             let barStartTime = (floor(bar.timeOpen / targetInterval) * targetInterval)

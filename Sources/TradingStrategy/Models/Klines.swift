@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Klines {
+public protocol Klines: Sendable {
     var timeOpen: TimeInterval { get set }
     var interval: TimeInterval  { get set }
 

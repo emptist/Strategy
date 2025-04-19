@@ -40,7 +40,7 @@ public extension [Klines] {
         guard count >= period else { return [] }
         
         // Initialize the first EMA value with the SMA of the first 'period' candles
-        var emaValues: [Double] = Array(prefix(period)).simpleMovingAverage(period: period) ?? []
+        var emaValues: [Double] = Array(prefix(period)).simpleMovingAverage(period: period)
         let smoothingFactor = 2.0 / (Double(period) + 1.0)
         
         // Calculate EMA for the rest of the candles
@@ -278,7 +278,7 @@ public extension [Klines] {
     
     // MARK: Compute VWAP
     
-    public func computeVWAP() -> [Double] {
+    func computeVWAP() -> [Double] {
         var cumulativeVWAP: [Double] = []
         var cumulativeVolume: Double = 0
         var cumulativePriceVolume: Double = 0

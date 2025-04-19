@@ -1,4 +1,4 @@
- public protocol Versioned {
+ public protocol Versioned: Sendable {
      /// Strategy Unique Identifier
      var id: String { get }
 
