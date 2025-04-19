@@ -1,7 +1,7 @@
 import Foundation
 
 /// **Touch event for a Support/Resistance Level**
-public struct Touch {
+public struct Touch: Sendable {
     public let index: Int
     public let time: TimeInterval
     public let closePrice: Double
@@ -14,7 +14,7 @@ public struct Touch {
 }
 
 /// **Support/Resistance Level with Touch Data**
-public struct Level {
+public struct Level: Sendable {
     public let index: Int
     public let time: TimeInterval
     public var touches: [Touch]

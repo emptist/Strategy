@@ -2,7 +2,7 @@ import Foundation
 
 public typealias PhaseLinePoint = (point: CGPoint, index: Int)
 
-public struct Phase: Equatable {
+public struct Phase: Sendable, Equatable {
     public var type: PhaseType
     // Rage of candle indices.
     public var range: ClosedRange<Int>
@@ -13,7 +13,7 @@ public struct Phase: Equatable {
     }
 }
 
-public enum PhaseType: String, Equatable {
+public enum PhaseType: String, Equatable, Sendable {
     case uptrend = "uptrend"
     case downtrend = "downtrend"
     case sideways = "sideways"

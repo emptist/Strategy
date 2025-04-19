@@ -13,7 +13,7 @@ extension Double {
     }
 }
 
-public struct Scale: Equatable {
+public struct Scale: Sendable, Equatable {
     public var x: Range<Int>
     public var y: Range<Double>
     public let candlesPerScreen: Int

@@ -8,6 +8,7 @@ public struct Candle: Klines {
     public var priceOpen: Double
     public var timeOpen: TimeInterval
     public var interval: TimeInterval
+    public var volume: Double?
     
     public init(
         open: Double,
