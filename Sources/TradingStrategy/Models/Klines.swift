@@ -45,4 +45,10 @@ public extension Klines {
     var lowerWick: Double {
         isLong ? priceOpen - priceLow : priceClose - priceLow
     }
+    
+    var timeRemaining: TimeInterval {
+        let closeTime = Date(timeIntervalSince1970: timeClose)
+        let now = Date()
+        return closeTime.timeIntervalSince(now)
+    }
 }
