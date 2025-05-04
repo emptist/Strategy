@@ -23,7 +23,7 @@ public protocol Strategy: Sendable, Versioned {
     var levels: [Level] { get }
     
     /// Indicates whether a recognizable trading pattern has been identified.
-    var patternIdentified: Bool { get }
+    var patternIdentified: Signal? { get }
     
     /// A dictionary containing additional information about detected patterns.
     var patternInformation: [String: Bool] { get }
