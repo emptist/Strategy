@@ -1,4 +1,4 @@
-public enum Signal {
+public enum Signal: Sendable {
     case buy
     case sell
 }
