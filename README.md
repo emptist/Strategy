@@ -202,3 +202,66 @@ public struct ORBStrategy: Strategy {
   → Use `print()` debugging inside `createStrategy()` to verify correct loading.  
 
 🚀 **Now, your package is correctly configured for TradeUI! Happy trading!** 🚀🔥
+
+---
+
+## 🐳 Build Linux-Compatible `.so` with Docker
+
+To run your strategy with the [TradeUI CLI](https://github.com/TradeWithIt/TradeUI) inside Docker or Linux, you need a **Linux `.so` file**.
+This section shows how to build it from any platform using Docker.
+
+### 📁 Step 1: Create `Dockerfile.linux.build`
+
+In the root of this repository, add this file:
+
+```dockerfile
+# Dockerfile.linux.build
+
+FROM swift:5.9-jammy AS builder
+WORKDIR /strategy
+
+# Copy source
+COPY . .
+
+# Build the dynamic library product
+RUN swift build -c release --product Strategy
+
+# Rename it for export
+RUN cp .build/release/libStrategy.so /strategy/Strategy.so
+
+# Export the .so in a minimal image
+FROM ubuntu:22.04
+COPY --from=builder /strategy/Strategy.so /out/Strategy.so
+```
+
+---
+
+### 🛠 Step 2: Build & Extract `.so` File
+
+From the root of the repo, run:
+
+```bash
+docker build -f Dockerfile.linux.build -t strategy-builder .
+docker run --rm -v $(pwd)/output:/out strategy-builder
+```
+
+You will now have:
+
+```
+output/Strategy.so
+```
+
+This `.so` is ready for use with the `trade` CLI:
+
+```bash
+trade ./output/Strategy.so FUT ESM5 60 CME USD
+```
+
+---
+
+### 🧠 Note
+
+* Make sure your `Package.swift` includes `Strategy` as a **dynamic library** product.
+* You can rename or copy the `.so` file for different strategies.
+
+---
