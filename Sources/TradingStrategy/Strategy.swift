@@ -33,6 +33,7 @@ public protocol Strategy: Sendable, Versioned {
     
     /// Evaluates the number of units/contracts to trade based on available capital.
     func shouldEnterWitUnitCount(
+        signal: Signal,
         entryBar: Klines,
         equity: Double,
         feePerUnit cost: Double,
@@ -40,10 +41,10 @@ public protocol Strategy: Sendable, Versioned {
     ) -> Int
     
     /// Adjusts the stop-loss level dynamically based on market conditions.
-    func adjustStopLoss(entryBar: Klines) -> Double?
+    func adjustStopLoss(signal: Signal, entryBar: Klines) -> Double?
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(entryBar: Klines, nextAnnoucment annoucment: Annoucment?) -> Bool
+    func shouldExit(signal: Signal, entryBar: Klines, nextAnnoucment annoucment: Annoucment?) -> Bool
 }
 
 public extension Strategy {
