@@ -217,7 +217,7 @@ In the root of this repository, add this file:
 ```dockerfile
 # Dockerfile.linux.build
 
-FROM swift:5.9-jammy AS builder
+FROM swift:6.1-jammy AS builder
 WORKDIR /strategy
 
 # Copy source
