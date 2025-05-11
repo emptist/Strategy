@@ -3,3 +3,19 @@ public enum Signal: Sendable {
     case buy(confidence: Float)
     case sell(confidence: Float)
 }
+
+public extension Signal {
+    var isLong: Bool {
+        switch self {
+        case .buy: true
+        case .sell: false
+        }
+    }
+    
+    var confidence: Float {
+        switch self {
+        case .buy(confidence: let c): c
+        case .sell(confidence: let c): c
+        }
+    }
+}
