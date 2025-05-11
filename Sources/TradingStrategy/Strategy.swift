@@ -2,10 +2,7 @@
 ///
 /// Each strategy can have multiple charts, various indicators, and phases.
 /// It supports both single-chart and multi-chart strategies.
-public protocol Strategy: Sendable, Versioned {
-    /// A string containing the name of the strategy.
-    var name: String { get }
-    
+public protocol Strategy: Sendable, Versioned {    
     /// The list of historical candlestick data per chart (Symbol -> Klines).
     var charts: [[Klines]] { get }
     

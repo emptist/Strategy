@@ -1,4 +1,5 @@
+/// Patter recognition signal, with value between 0-1 indicating confidence
 public enum Signal: Sendable {
-    case buy
-    case sell
+    case buy(Float)
+    case sell(Float)
 }
