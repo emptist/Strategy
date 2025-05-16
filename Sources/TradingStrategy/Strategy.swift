@@ -23,7 +23,7 @@ public protocol Strategy: Sendable, Versioned {
     var patternIdentified: Signal? { get }
     
     /// A dictionary containing additional information about detected patterns.
-    var patternInformation: [String: Bool] { get }
+    var patternInformation: [String: Double] { get }
     
     /// Initializes a strategy with given sets of candlestick data.
     init(candles: [Klines])
