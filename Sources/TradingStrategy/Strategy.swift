@@ -37,8 +37,8 @@ public protocol Strategy: Sendable, Versioned {
         nextAnnoucment annoucment: Annoucment?
     ) -> Int
     
-    /// Adjusts the stop-loss level dynamically based on market conditions.
-    func adjustStopLoss(signal: Signal, entryBar: Klines) -> Double?
+    /// the stop-loss and take profit targets for  market.
+    func exitTargets(for signal: Signal, entryBar: Klines) -> (takeProfit: Double?, stopLoss: Double?)
     
     /// Determines whether the trade should be exited based on strategy conditions.
     func shouldExit(signal: Signal, entryBar: Klines, nextAnnoucment annoucment: Annoucment?) -> Bool
