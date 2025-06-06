@@ -33,6 +33,8 @@ public protocol Strategy: Sendable, Versioned {
         signal: Signal,
         entryBar: Klines,
         equity: Double,
+        tickValue: Double,
+        tickSize: Double,
         feePerUnit cost: Double,
         nextAnnoucment annoucment: Annoucment?
     ) -> Int
