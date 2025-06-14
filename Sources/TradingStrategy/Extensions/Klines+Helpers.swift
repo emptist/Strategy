@@ -189,8 +189,13 @@ public extension [Klines] {
         var dxValues: [Double] = []
         
         for i in 0..<plusDI.count {
-            let dx = 100 * abs(plusDI[i] - minusDI[i]) / (plusDI[i] + minusDI[i])
-            dxValues.append(dx)
+            let diff = (plusDI[i] + minusDI[i])
+            if diff != 0 {
+                let dx = 100 * abs(plusDI[i] - minusDI[i]) / diff
+                dxValues.append(dx)
+            } else {
+                dxValues.append(0)
+            }
         }
         
         return dxValues.exponentialMovingAverage(period: period)
