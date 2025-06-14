@@ -36,14 +36,14 @@ public protocol Strategy: Sendable, Versioned {
         tickValue: Double,
         tickSize: Double,
         feePerUnit cost: Double,
-        nextAnnoucment annoucment: Annoucment?
+        nextAnnouncment announcment: Annoucment?
     ) -> Int
     
     /// the stop-loss and take profit targets for  market.
     func exitTargets(for signal: Signal, entryBar: Klines) -> (takeProfit: Double?, stopLoss: Double?)
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(signal: Signal, entryBar: Klines, nextAnnoucment annoucment: Annoucment?) -> Bool
+    func shouldExit(signal: Signal, entryBar: Klines, nextAnnouncment announcment: Annoucment?) -> Bool
 }
 
 public extension Strategy {
