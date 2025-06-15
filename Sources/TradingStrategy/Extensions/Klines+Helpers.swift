@@ -2,7 +2,32 @@ import Foundation
 
 public typealias BollingerBands = (upperBand: [Double], middleBand: [Double], lowerBand: [Double])
 
+public struct MACDResult {
+    public let macd: [Double]
+    public let signal: [Double]
+    public let histogram: [Double]
+}
+
 public extension [Klines] {
+    func macd(fast: Int = 12, slow: Int = 26, signal: Int = 9) -> MACDResult {
+        guard count >= slow + signal else {
+            return MACDResult(macd: [], signal: [], histogram: [])
+        }
+
+        let closes = self.map(\.priceClose)
+        let fastEMA = closes.exponentialMovingAverage(period: fast)
+        let slowEMA = closes.exponentialMovingAverage(period: slow)
+
+        let macdLine = zip(fastEMA, slowEMA).map { $0 - $1 }
+        let signalLine = macdLine.exponentialMovingAverage(period: signal)
+
+        // Pad signal line to align with macd line length
+        let paddedSignal = Array<Double>(repeating: Double.nan, count: macdLine.count - signalLine.count) + signalLine
+        let histogram = zip(macdLine, paddedSignal).map { $0 - ($1.isNaN ? 0 : $1) }
+
+        return MACDResult(macd: macdLine, signal: paddedSignal, histogram: histogram)
+    }
+
     // Calculate Simple Moving Average (SMA)
     func simpleMovingAverage(_ period: Int) -> Double? {
         // Ensure we have enough candles to calculate the SMA
