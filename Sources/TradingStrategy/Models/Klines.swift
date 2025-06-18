@@ -31,7 +31,7 @@ public extension Klines {
     }
     
     var body: Double {
-        isLong ? priceClose - priceOpen : priceOpen - priceClose
+        abs(priceClose - priceOpen)
     }
     
     var centerPrice: Double {
@@ -44,6 +44,10 @@ public extension Klines {
     
     var lowerWick: Double {
         isLong ? priceOpen - priceLow : priceClose - priceLow
+    }
+    
+    var value: Double {
+        abs(priceHigh - priceLow)
     }
     
     var timeRemaining: TimeInterval {

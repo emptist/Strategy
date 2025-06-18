@@ -19,6 +19,9 @@ public protocol Strategy: Sendable, Versioned {
     /// The computed support and resistance levels for each chart.
     var levels: [Level] { get }
     
+    /// Most recent sequence of price patterns (H, L, HH, HL, LH, LL)
+    var patterns: [(index: Int, pattern: PricePattern)] { get }
+    
     /// Indicates whether a recognizable trading pattern has been identified.
     var patternIdentified: Signal? { get }
     

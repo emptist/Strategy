@@ -8,7 +8,84 @@ public struct MACDResult {
     public let histogram: [Double]
 }
 
+
+public enum PricePattern: String, Sendable {
+    case high = "H"       // High: Higher high than the previous candle
+    case low = "L"        // Low: Lower low than the previous candle
+    case higherHigh = "HH" // Higher High: Higher high than the previous high
+    case higherLow = "HL"  // Higher Low: Higher low than the previous low
+    case lowerHigh = "LH"  // Lower High: Lower high than the previous high
+    case lowerLow = "LL"   // Lower Low: Lower low than the previous low
+}
+
 public extension [Klines] {
+    func lastPricePattern(window: Int = 9) -> [(index: Int, pattern: PricePattern)] {
+        guard count > window * 2 else { return [] }
+        
+        @inline(__always)
+        func isPivotHigh(at i: Int) -> Bool {
+            let center = self[i].priceHigh
+            for j in (i - window)...(i + window) where j != i {
+                if self[j].priceHigh >= center { return false }
+            }
+            return true
+        }
+        
+        @inline(__always)
+        func isPivotLow(at i: Int) -> Bool {
+            let center = self[i].priceLow
+            for j in (i - window)...(i + window) where j != i {
+                if self[j].priceLow <= center { return false }
+            }
+            return true
+        }
+        
+        var pivots: [(index: Int, pattern: PricePattern)] = []
+        var direction: PricePattern? = nil
+        
+        for i in stride(from: count - window - 1, through: window, by: -1) {
+            if isPivotHigh(at: i) {
+                if direction == .low { break }
+                pivots.append((i, .high))
+                direction = .high
+            } else if isPivotLow(at: i) {
+                if direction == .high { break }
+                pivots.append((i, .low))
+                direction = .low
+            }
+        }
+        
+        guard !pivots.isEmpty else { return [] }
+        
+        var patterns: [(index: Int, pattern: PricePattern)] = []
+        var lastValue: Double? = nil
+        
+        for (i, base) in pivots.reversed() {
+            switch base {
+            case .high:
+                if lastValue == nil {
+                    patterns.append((i, .high))
+                } else {
+                    patterns.append((i, self[i].priceHigh > lastValue! ? .higherHigh : .lowerHigh))
+                }
+                lastValue = self[i].priceHigh
+                
+            case .low:
+                if lastValue == nil {
+                    patterns.append((i, .low))
+                } else {
+                    patterns.append((i, self[i].priceLow > lastValue! ? .higherLow : .lowerLow))
+                }
+                lastValue = self[i].priceLow
+                
+            default:
+                break
+            }
+        }
+        
+        return patterns
+    }
+    
     func macd(fast: Int = 12, slow: Int = 26, signal: Int = 9) -> MACDResult {
         guard count >= slow + signal else {
             return MACDResult(macd: [], signal: [], histogram: [])
@@ -62,7 +139,7 @@ public extension [Klines] {
     }
     
     func exponentialMovingAverage(period: Int) -> [Double] {
-        guard count >= period else { return [] }
+        guard count >= period else { return Array<Double>(repeating: 0, count: count) }
         
         // Initialize the first EMA value with the SMA of the first 'period' candles
         var emaValues: [Double] = Array(prefix(period)).simpleMovingAverage(period: period)
