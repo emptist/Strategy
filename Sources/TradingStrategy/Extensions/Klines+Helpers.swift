@@ -19,6 +19,18 @@ public enum PricePattern: String, Sendable {
 }
 
 public extension [Klines] {
+    /// Computes Momentum = Current Close - N periods ago
+    func momentum(period: Int) -> [Double] {
+        guard count >= period else { return Array<Double>(repeating: 0, count: count) }
+        var result: [Double] = Array<Double>(repeating: 0, count: period)
+        
+        for i in period..<count {
+            result.append(self[i].priceClose - self[i - period].priceClose)
+        }
+        
+        return result
+    }
+
     func lastPricePattern(window: Int = 9) -> [(index: Int, pattern: PricePattern)] {
         guard count > window * 2 else { return [] }
         
