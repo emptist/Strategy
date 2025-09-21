@@ -18,7 +18,7 @@ public enum PricePattern: String, Sendable {
     case lowerLow = "LL"   // Lower Low: Lower low than the previous low
 }
 
-public extension [Klines] {
+public extension [any Klines] {
     /// Computes Momentum = Current Close - N periods ago
     func momentum(period: Int) -> [Double] {
         guard count >= period else { return Array<Double>(repeating: 0, count: count) }

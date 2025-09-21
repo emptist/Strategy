@@ -28,7 +28,7 @@ public struct Scale: Sendable, Equatable {
         self.candlesPerScreen = candlesPerScreen
     }
     
-    public init(data: [Klines], candlesPerScreen: Int = 80) {
+    public init(data: [any Klines], candlesPerScreen: Int = 80) {
         guard !data.isEmpty else {
             self.init()
             return

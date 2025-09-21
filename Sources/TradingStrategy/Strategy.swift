@@ -4,7 +4,7 @@
 /// It supports both single-chart and multi-chart strategies.
 public protocol Strategy: Sendable, Versioned {    
     /// The list of historical candlestick data per chart (Symbol -> Klines).
-    var charts: [[Klines]] { get }
+    var charts: [[any Klines]] { get }
     
     /// The chart scales per chart (Symbol -> Scale).
     var resolution: [Scale] { get }
@@ -29,28 +29,28 @@ public protocol Strategy: Sendable, Versioned {
     var patternInformation: [String: Double] { get }
     
     /// Initializes a strategy with given sets of candlestick data.
-    init(candles: [Klines])
+    init(candles: [any Klines])
     
     /// Evaluates the number of units/contracts to trade based on available capital.
     func shouldEnterWitUnitCount(
         signal: Signal,
-        entryBar: Klines,
+        entryBar: any Klines,
         equity: Double,
         tickValue: Double,
         tickSize: Double,
         feePerUnit cost: Double,
-        nextAnnouncment announcment: Annoucment?
+        nextAnnouncment announcment: (any Annoucment)?
     ) -> Int
     
     /// the stop-loss and take profit targets for  market.
-    func exitTargets(for signal: Signal, entryBar: Klines) -> (takeProfit: Double?, stopLoss: Double?)
+    func exitTargets(for signal: Signal, entryBar: any Klines) -> (takeProfit: Double?, stopLoss: Double?)
     
     /// Determines whether the trade should be exited based on strategy conditions.
-    func shouldExit(signal: Signal, entryBar: Klines, nextAnnouncment announcment: Annoucment?) -> Bool
+    func shouldExit(signal: Signal, entryBar: any Klines, nextAnnouncment announcment: (any Annoucment)?) -> Bool
 }
 
 public extension Strategy {
-    var candles: [Klines] {
+    var candles: [any Klines] {
         charts.first ?? []
     }
 }

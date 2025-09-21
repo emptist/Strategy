@@ -38,7 +38,7 @@ public extension [Phase] {
     }
 }
 
-public extension [Klines] {
+public extension [any Klines] {
     func convertToPhases(minPhaseLength: Int = 14, longTermMA: [Double]) -> [Phase] {
         guard count > 1, longTermMA.count >= count else { return [] }
         
